@@ -2,7 +2,7 @@ import { IslandUpdates, PeerData, PeerPositionChange, Position3D } from '../logi
 import { GlobalContext, Parcel, ServiceDiscoveryMessage } from '../types'
 import { HeartbeatMessage, IslandChangedMessage, LeftIslandMessage, JoinIslandMessage } from './proto/archipelago'
 import { Reader } from 'protobufjs/minimal'
-import { JSONCodec } from 'nats'
+import { JSONCodec } from '@well-known-components/nats-component'
 
 export async function setupTopics(globalContext: GlobalContext): Promise<void> {
   const { nats, archipelago, config, logs, metrics, realm } = globalContext.components
