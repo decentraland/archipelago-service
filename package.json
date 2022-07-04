@@ -51,6 +51,6 @@
     "jsonwebtoken": "^8.5.1",
     "livekit-server-sdk": "^0.5.10",
     "protoc-gen-dcl": "^1.0.0-20220109214200.commit-f45e34a",
-    "ts-proto": "^1.112.2"
+    "ts-proto": "^1.116.1"
   }
 }
