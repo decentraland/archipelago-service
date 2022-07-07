@@ -10,7 +10,7 @@ import {
   UpdatableArchipelagoParameters,
   Transport,
   ArchipelagoMetrics
-} from '../types/interfaces'
+} from '../interfaces'
 import { findMax, popMax } from '../misc/utils'
 import { IArchipelago } from './interfaces'
 import { AccessToken } from 'livekit-server-sdk'

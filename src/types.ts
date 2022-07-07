@@ -6,7 +6,7 @@ import type {
   IBaseComponent,
   IMetricsComponent
 } from '@well-known-components/interfaces'
-import { IArchipelagoComponent } from './logic/archipelago/component'
+import { ArchipelagoComponent } from './controllers/ArchipelagoController'
 import { metricDeclarations } from './metrics'
 import { IMessageBrokerComponent } from './ports/message-broker'
 
@@ -22,7 +22,7 @@ export type BaseComponents = {
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   messageBroker: IMessageBrokerComponent
-  archipelago: IArchipelagoComponent
+  archipelago: ArchipelagoComponent
 }
 
 // components used in runtime
