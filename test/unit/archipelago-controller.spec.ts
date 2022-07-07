@@ -15,7 +15,7 @@ describe('archipelago controller', () => {
         wsRoomService: { url: 'test_url', secret: '123456' }
       },
       flushFrequency: 0.05,
-      workerSrcPath: './dist/logic/archipelago/worker/worker.js',
+      workerSrcPath: './dist/logic/worker.js',
       components: {}
     })
 
