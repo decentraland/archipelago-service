@@ -8,7 +8,8 @@ import type {
 } from '@well-known-components/interfaces'
 import { ArchipelagoComponent } from './controllers/ArchipelagoController'
 import { metricDeclarations } from './metrics'
-import { IMessageBrokerComponent } from './ports/message-broker'
+import { INatsComponent } from '@well-known-components/nats-component/dist/types'
+import { IRealmComponent } from './ports/realm'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -21,8 +22,9 @@ export type BaseComponents = {
   server: IHttpServerComponent<GlobalContext>
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
-  messageBroker: IMessageBrokerComponent
+  nats: INatsComponent
   archipelago: ArchipelagoComponent
+  realm: IRealmComponent
 }
 
 // components used in runtime
@@ -46,5 +48,12 @@ export type HandlerContextWithPath<
   }>,
   Path
 >
+
+export type Parcel = [number, number]
+
+export type ServiceDiscoveryMessage = {
+  serverName: string
+  status: any
+}
 
 export type Context<Path extends string = any> = IHttpServerComponent.PathAwareContext<GlobalContext, Path>
