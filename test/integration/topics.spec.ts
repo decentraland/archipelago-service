@@ -1,5 +1,5 @@
 import { HeartbeatMessage } from '../../src/controllers/proto/archipelago'
-import { IslandUpdates, UpdateSubscriber } from '../../src/logic/archipelago'
+import { IslandUpdates, UpdateSubscriber } from '../../src/interfaces'
 import { test } from '../components'
 import { untilTrue } from '../helpers/archipelago'
 
@@ -43,7 +43,7 @@ test('Topics', function ({ components }) {
       }
     }
 
-    components.messageBroker.publish(`client-proto.peer.${peerId}.heartbeat`, HeartbeatMessage.encode(message).finish())
+    components.nats.publish(`client-proto.peer.${peerId}.heartbeat`, HeartbeatMessage.encode(message).finish())
     components.archipelago.flush()
     await receivedUpdatesForPeers('1')
 
