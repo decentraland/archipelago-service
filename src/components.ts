@@ -8,6 +8,9 @@ import { AppComponents, GlobalContext, ArchipelagoComponent } from './types'
 import { metricDeclarations } from './metrics'
 import { ArchipelagoController } from './controllers/ArchipelagoController'
 import { createNatsComponent } from '@well-known-components/nats-component'
+import { createArchipelagoMetricsComponent } from './ports/archipelago-metrics'
+import { createReportOverNatsComponent } from './ports/report-over-nats'
+import { createNatsListenerComponent } from './ports/nats-listener'
 
 async function getLivekitConf(config: IConfigComponent) {
   const url = await config.requireString('LIVEKIT_URL')
@@ -35,7 +38,7 @@ async function getWsRoomServiceConf(config: IConfigComponent) {
 export async function createArchipelagoComponent(
   config: IConfigComponent,
   logs: ILoggerComponent
-): Promise<ArchipelagoComponent> {
+): Promise<ArchipelagoController> {
   const flushFrequency = await config.requireNumber('ARCHIPELAGO_FLUSH_FREQUENCY')
   const joinDistance = await config.requireNumber('ARCHIPELAGO_JOIN_DISTANCE')
   const leaveDistance = await config.requireNumber('ARCHIPELAGO_LEAVE_DISTANCE')
@@ -70,6 +73,17 @@ export async function initComponents(): Promise<AppComponents> {
   const nats = await createNatsComponent({ config, logs })
   const archipelago = await createArchipelagoComponent(config, logs)
 
+  const archipelagoMetrics = await createArchipelagoMetricsComponent({
+    logs,
+    config,
+    metrics,
+    archipelagoMetricsCollector: archipelago
+  })
+
+  const reportOverNats = await createReportOverNatsComponent({ logs, nats, config, archipelagoStatus: archipelago })
+
+  const natsListener = await createNatsListenerComponent({ logs, nats, archipelago, config })
+
   return {
     config,
     logs,
@@ -78,6 +92,11 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     nats,
-    archipelago
+    archipelago,
+    archipelagoMetricsCollector: archipelago,
+    archipelagoStatus: archipelago,
+    archipelagoMetrics,
+    reportOverNats,
+    natsListener
   }
 }
