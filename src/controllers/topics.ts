@@ -1,5 +1,4 @@
-import { IslandUpdates, PeerData, PeerPositionChange } from '../interfaces'
-import { GlobalContext, ServiceDiscoveryMessage } from '../types'
+import { IslandUpdates, PeerData, PeerPositionChange, GlobalContext, ServiceDiscoveryMessage } from '../types'
 import {
   HeartbeatMessage,
   IslandChangedMessage,
