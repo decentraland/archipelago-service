@@ -5,6 +5,9 @@ import { Reader } from 'protobufjs/minimal'
 
 export type INatsListenerComponent = IBaseComponent & {
   init: () => Promise<void>
+  stop: () => Promise<void>
+  startPeerExpirationInterval: () => void
+  startNatsSubscriptions: () => void
 }
 
 export async function createNatsListenerComponent(
@@ -17,9 +20,10 @@ export async function createNatsListenerComponent(
 
   const lastPeerHeartbeats = new Map<string, number>()
 
-  async function init() {
+  let peerExpirationInterval: NodeJS.Timer | undefined = undefined
+  function startPeerExpirationInterval() {
     // Clear peers that did not send heartbeats in the required interval
-    setInterval(() => {
+    peerExpirationInterval = setInterval(() => {
       const expiredHeartbeatTime = Date.now() - checkHeartbeatInterval
 
       const inactivePeers = Array.from(lastPeerHeartbeats)
@@ -29,7 +33,9 @@ export async function createNatsListenerComponent(
       inactivePeers.forEach((peerId) => lastPeerHeartbeats.delete(peerId))
       archipelago.clearPeers(...inactivePeers)
     }, checkHeartbeatInterval)
+  }
 
+  function startNatsSubscriptions() {
     const connectSubscription = nats.subscribe('peer.*.connect')
     ;(async () => {
       for await (const message of connectSubscription.generator) {
@@ -76,7 +82,21 @@ export async function createNatsListenerComponent(
     })().catch((err: any) => logger.error(`error processing subscription message; ${err.message}`))
   }
 
+  async function init() {
+    startPeerExpirationInterval()
+    startNatsSubscriptions()
+  }
+
+  async function stop() {
+    if (peerExpirationInterval) {
+      clearInterval(peerExpirationInterval)
+    }
+  }
+
   return {
-    init
+    init,
+    stop,
+    startPeerExpirationInterval,
+    startNatsSubscriptions
   }
 }

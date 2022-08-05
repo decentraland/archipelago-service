@@ -10,11 +10,15 @@ import {
 } from '../controllers/proto/archipelago'
 import { JSONCodec } from '@well-known-components/nats-component'
 
-const ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL = 1000 * 60 * 2 // 2 min
+const DEFAULT_ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL = 1000 * 60 * 2 // 2 min
+const DEFAULT_ARCHIPELAGO_STATUS_UPDATE_INTERVAL = 10000
 
 export type IReportOverNatsComponent = IBaseComponent & {
   init: () => Promise<void>
   stop: () => Promise<void>
+  startServiceDiscoveryInterval: () => void
+  startIslandsReportInterval: () => void
+  subscribeToArchipelagoUpdates: () => void
 }
 
 export async function createReportOverNatsComponent(
@@ -23,14 +27,16 @@ export async function createReportOverNatsComponent(
   const { nats, archipelagoStatus, config, logs } = components
 
   const commitHash = await config.getString('COMMIT_HASH')
-  const serviceUpdateIntervalFreq = await config.requireNumber('ARCHIPELAGO_STATUS_UPDATE_INTERVAL')
+  const serviceUpdateIntervalFreq =
+    (await config.getNumber('ARCHIPELAGO_STATUS_UPDATE_INTERVAL')) ?? DEFAULT_ARCHIPELAGO_STATUS_UPDATE_INTERVAL
+  const islandsStatusUpdateIntervalFreq =
+    (await config.getNumber('ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL')) ??
+    DEFAULT_ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL
   const logger = logs.getLogger('Report over NATS component')
   const jsonCodec = JSONCodec()
 
   let serviceDiscoveryInterval: undefined | NodeJS.Timer = undefined
-  let islandsReportInterval: undefined | NodeJS.Timer = undefined
-
-  async function init() {
+  function startServiceDiscoveryInterval() {
     serviceDiscoveryInterval = setInterval(async () => {
       try {
         const status = {
@@ -47,7 +53,10 @@ export async function createReportOverNatsComponent(
         logger.error(err)
       }
     }, serviceUpdateIntervalFreq)
+  }
 
+  let islandsReportInterval: undefined | NodeJS.Timer = undefined
+  function startIslandsReportInterval() {
     islandsReportInterval = setInterval(async () => {
       try {
         const islands = await archipelagoStatus.getIslands()
@@ -59,7 +68,7 @@ export async function createReportOverNatsComponent(
               y: i.center[1],
               z: i.center[2]
             },
-            maxPeers: 100,
+            maxPeers: i.maxPeers,
             radius: i.radius,
             peers: i.peers.map((p) => p.id)
           }
@@ -69,8 +78,10 @@ export async function createReportOverNatsComponent(
       } catch (err: any) {
         logger.error(err)
       }
-    }, ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL)
+    }, islandsStatusUpdateIntervalFreq)
+  }
 
+  function subscribeToArchipelagoUpdates() {
     archipelagoStatus.subscribeToUpdates(async (updates: IslandUpdates) => {
       // Prevent processing updates if there are no changes
       if (!Object.keys(updates).length) {
@@ -127,6 +138,12 @@ export async function createReportOverNatsComponent(
     })
   }
 
+  async function init() {
+    startServiceDiscoveryInterval()
+    startIslandsReportInterval()
+    subscribeToArchipelagoUpdates()
+  }
+
   async function stop() {
     if (serviceDiscoveryInterval) {
       clearInterval(serviceDiscoveryInterval)
@@ -139,6 +156,9 @@ export async function createReportOverNatsComponent(
 
   return {
     init,
+    startServiceDiscoveryInterval,
+    startIslandsReportInterval,
+    subscribeToArchipelagoUpdates,
     stop
   }
 }
