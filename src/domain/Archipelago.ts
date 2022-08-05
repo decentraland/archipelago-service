@@ -337,7 +337,7 @@ export class Archipelago implements IArchipelago {
   private createIsland(group: PeerData[], updates: IslandUpdates, affectedIslands: Set<string>): IslandUpdates {
     const newIslandId = this.generateId()
 
-    let transport: Transport = 'p2p'
+    const transport: Transport = 'p2p'
 
     const island: InternalIsland = {
       id: newIslandId,
@@ -373,7 +373,6 @@ export class Archipelago implements IArchipelago {
   }
 
   private setPeersIsland(islandId: string, peers: PeerData[], updates: IslandUpdates): IslandUpdates {
-    const island = this.getIsland(islandId)
     for (const peer of peers) {
       const previousIslandId = peer.islandId
       peer.islandId = islandId
