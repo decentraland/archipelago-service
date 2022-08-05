@@ -12,8 +12,7 @@ describe('archipelago', () => {
   beforeEach(() => {
     archipelago = new Archipelago({
       joinDistance: 64,
-      leaveDistance: 80,
-      wsRoomService: { url: 'test_url', secret: '123456' }
+      leaveDistance: 80
     })
   })
 

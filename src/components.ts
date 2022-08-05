@@ -4,36 +4,10 @@ import { IConfigComponent, ILoggerComponent } from '@well-known-components/inter
 import { createLogComponent } from '@well-known-components/logger'
 import { createFetchComponent } from './ports/fetch'
 import { createMetricsComponent } from '@well-known-components/metrics'
-import { AppComponents, GlobalContext, ArchipelagoComponent } from './types'
+import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
 import { ArchipelagoController } from './controllers/ArchipelagoController'
 import { createNatsComponent } from '@well-known-components/nats-component'
-import { createArchipelagoMetricsComponent } from './ports/archipelago-metrics'
-import { createReportOverNatsComponent } from './ports/report-over-nats'
-import { createNatsListenerComponent } from './ports/nats-listener'
-
-async function getLivekitConf(config: IConfigComponent) {
-  const url = await config.requireString('LIVEKIT_URL')
-  const apiKey = await config.requireString('LIVEKIT_API_KEY')
-  const apiSecret = await config.requireString('LIVEKIT_API_SECRET')
-
-  if (!url || !apiKey || !apiSecret) {
-    return
-  }
-
-  return { url, apiKey, apiSecret }
-}
-
-async function getWsRoomServiceConf(config: IConfigComponent) {
-  const url = await config.requireString('WS_ROOM_SERVICE_URL')
-  const secret = await config.requireString('WS_ROOM_SERVICE_SECRET')
-
-  if (!url || !secret) {
-    return
-  }
-
-  return { url, secret }
-}
 
 export async function createArchipelagoComponent(
   config: IConfigComponent,
@@ -50,9 +24,7 @@ export async function createArchipelagoComponent(
     archipelagoParameters: {
       joinDistance,
       leaveDistance,
-      maxPeersPerIsland,
-      livekit: await getLivekitConf(config),
-      wsRoomService: await getWsRoomServiceConf(config)
+      maxPeersPerIsland
     },
     workerSrcPath,
     components: { logs }
@@ -73,17 +45,6 @@ export async function initComponents(): Promise<AppComponents> {
   const nats = await createNatsComponent({ config, logs })
   const archipelago = await createArchipelagoComponent(config, logs)
 
-  const archipelagoMetrics = await createArchipelagoMetricsComponent({
-    logs,
-    config,
-    metrics,
-    archipelagoMetricsCollector: archipelago
-  })
-
-  const reportOverNats = await createReportOverNatsComponent({ logs, nats, config, archipelagoStatus: archipelago })
-
-  const natsListener = await createNatsListenerComponent({ logs, nats, archipelago, config })
-
   return {
     config,
     logs,
@@ -92,11 +53,6 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     nats,
-    archipelago,
-    archipelagoMetricsCollector: archipelago,
-    archipelagoStatus: archipelago,
-    archipelagoMetrics,
-    reportOverNats,
-    natsListener
+    archipelago
   }
 }

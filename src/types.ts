@@ -9,9 +9,6 @@ import type {
 import { metricDeclarations } from './metrics'
 import { INatsComponent } from '@well-known-components/nats-component/dist/types'
 import { IdGenerator } from './misc/idGenerator'
-import { IArchipelagoMetricsComponent } from './ports/archipelago-metrics'
-import { IReportOverNatsComponent } from './ports/report-over-nats'
-import { INatsListenerComponent } from './ports/nats-listener'
 
 export type Position3D = [number, number, number]
 export type Transport = 'livekit' | 'ws' | 'p2p'
@@ -38,15 +35,6 @@ export type ArchipelagoOptions = {
   joinDistance: number
   leaveDistance: number
   islandIdGenerator: IdGenerator
-  livekit?: {
-    url: string
-    apiKey: string
-    apiSecret: string
-  }
-  wsRoomService?: {
-    url: string
-    secret: string
-  }
 }
 
 export type MandatoryArchipelagoOptions = Pick<ArchipelagoOptions, 'joinDistance' | 'leaveDistance'>
@@ -88,19 +76,13 @@ export type ArchipelagoMetrics = {
 
 export { IdGenerator } from './misc/idGenerator'
 
-export type ArchipelagoMetricsCollectorComponent = {
+export type ArchipelagoComponent = {
   calculateMetrics(): Promise<ArchipelagoMetrics>
-}
-
-export type ArchipelagoStatusComponent = {
+  clearPeers(...ids: string[]): void
+  setPeersPositions(...requests: PeerPositionChange[]): void
   subscribeToUpdates(subscriber: UpdateSubscriber): void
   getIslands(): Promise<Island[]>
   getIsland(id: string): Promise<Island | undefined>
-}
-
-export type ArchipelagoComponent = {
-  clearPeers(...ids: string[]): void
-  setPeersPositions(...requests: PeerPositionChange[]): void
 }
 
 export type GlobalContext = {
@@ -116,11 +98,6 @@ export type BaseComponents = {
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   nats: INatsComponent
   archipelago: ArchipelagoComponent
-  archipelagoStatus: ArchipelagoStatusComponent
-  archipelagoMetricsCollector: ArchipelagoMetricsCollectorComponent
-  archipelagoMetrics: IArchipelagoMetricsComponent
-  reportOverNats: IReportOverNatsComponent
-  natsListener: INatsListenerComponent
 }
 
 // components used in runtime

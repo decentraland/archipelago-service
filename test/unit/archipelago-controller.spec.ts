@@ -11,8 +11,7 @@ describe('archipelago controller', () => {
     controller = new ArchipelagoController({
       archipelagoParameters: {
         joinDistance: 64,
-        leaveDistance: 80,
-        wsRoomService: { url: 'test_url', secret: '123456' }
+        leaveDistance: 80
       },
       flushFrequency: 0.05,
       workerSrcPath: './dist/logic/worker.js',

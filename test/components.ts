@@ -7,7 +7,6 @@ import { main } from '../src/service'
 import { TestComponents } from '../src/types'
 import { initComponents as originalInitComponents } from '../src/components'
 import { createLocalNatsComponent } from '@well-known-components/nats-component/dist/test-component'
-import { createNatsListenerComponent } from '../src/ports/nats-listener'
 
 /**
  * Behaves like Jest "describe" function, used to describe a test for a
@@ -25,15 +24,13 @@ async function initComponents(): Promise<TestComponents> {
   process.env.ARCHIPELAGO_WORKER_SRC_PATH = './dist/logic/worker.js'
 
   const components = await originalInitComponents()
-  const { config, logs, archipelago } = components
+  const { config } = components
 
   const nats = await createLocalNatsComponent()
-  const natsListener = await createNatsListenerComponent({ logs, nats, archipelago, config })
 
   return {
     ...components,
     localFetch: await createLocalFetchCompoment(config),
-    nats: nats,
-    natsListener
+    nats: nats
   }
 }
