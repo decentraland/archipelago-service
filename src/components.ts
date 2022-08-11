@@ -8,6 +8,7 @@ import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
 import { ArchipelagoController } from './controllers/ArchipelagoController'
 import { createNatsComponent } from '@well-known-components/nats-component'
+import { createTransportRegistryComponent } from './ports/transport-registry'
 
 export async function createArchipelagoComponent(
   config: IConfigComponent,
@@ -44,6 +45,7 @@ export async function initComponents(): Promise<AppComponents> {
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const nats = await createNatsComponent({ config, logs })
   const archipelago = await createArchipelagoComponent(config, logs)
+  const transportRegistry = await createTransportRegistryComponent({ logs })
 
   return {
     config,
@@ -53,6 +55,7 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     nats,
-    archipelago
+    archipelago,
+    transportRegistry
   }
 }

@@ -9,6 +9,7 @@ import type {
 import { metricDeclarations } from './metrics'
 import { INatsComponent } from '@well-known-components/nats-component/dist/types'
 import { IdGenerator } from './misc/idGenerator'
+import { ITransportRegistryComponent } from './ports/transport-registry'
 
 export type Position3D = [number, number, number]
 export type Transport = 'livekit' | 'ws' | 'p2p'
@@ -98,6 +99,7 @@ export type BaseComponents = {
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   nats: INatsComponent
   archipelago: ArchipelagoComponent
+  transportRegistry: ITransportRegistryComponent
 }
 
 // components used in runtime
