@@ -6,7 +6,7 @@ import { createFetchComponent } from './ports/fetch'
 import { createMetricsComponent } from '@well-known-components/metrics'
 import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
-import { ArchipelagoController } from './controllers/ArchipelagoController'
+import { ArchipelagoWorkerController } from './controllers/worker-controller'
 import { createNatsComponent } from '@well-known-components/nats-component'
 import { createTransportRegistryComponent } from './ports/transport-registry'
 import { WebSocketServer } from 'ws'
@@ -14,14 +14,14 @@ import { WebSocketServer } from 'ws'
 export async function createArchipelagoComponent(
   config: IConfigComponent,
   logs: ILoggerComponent
-): Promise<ArchipelagoController> {
+): Promise<ArchipelagoWorkerController> {
   const flushFrequency = await config.requireNumber('ARCHIPELAGO_FLUSH_FREQUENCY')
   const joinDistance = await config.requireNumber('ARCHIPELAGO_JOIN_DISTANCE')
   const leaveDistance = await config.requireNumber('ARCHIPELAGO_LEAVE_DISTANCE')
   const maxPeersPerIsland = await config.requireNumber('ARCHIPELAGO_MAX_PEERS_PER_ISLAND')
   const workerSrcPath = await config.getString('ARCHIPELAGO_WORKER_SRC_PATH')
 
-  const controller = new ArchipelagoController({
+  const controller = new ArchipelagoWorkerController({
     flushFrequency,
     archipelagoParameters: {
       joinDistance,

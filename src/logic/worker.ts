@@ -1,5 +1,5 @@
 import { ILoggerComponent } from '@well-known-components/interfaces'
-import { WorkerOptions } from '../controllers/ArchipelagoController'
+import { WorkerOptions } from '../controllers/worker-controller'
 import { IArchipelago, Archipelago } from '../logic/Archipelago'
 import { NullLogger } from '../misc/utils'
 import { IslandUpdates } from '../types'
