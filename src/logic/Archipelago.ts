@@ -10,7 +10,18 @@ import {
   UpdatableArchipelagoParameters
 } from '../types'
 import { findMax, popMax } from '../misc/utils'
-import { IArchipelago } from './interfaces'
+
+export interface IArchipelago {
+  getIslandsCount(): number
+  getPeersCount(): number
+  getPeerIds(): string[]
+  clearPeers(ids: string[]): IslandUpdates
+  getIsland(id: string): Island | undefined
+  getIslands(): Island[]
+  getPeerData(id: string): PeerData | undefined
+  setPeersPositions(requests: PeerPositionChange[]): IslandUpdates
+  modifyOptions(options: UpdatableArchipelagoParameters): IslandUpdates
+}
 
 const X_AXIS = 0
 const Z_AXIS = 2
