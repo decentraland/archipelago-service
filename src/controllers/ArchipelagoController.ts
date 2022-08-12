@@ -11,7 +11,6 @@ import { fork, ChildProcess } from 'child_process'
 import {
   GetIsland,
   GetPeerData,
-  GetPeerIds,
   GetPeersData,
   WorkerMessage,
   WorkerRequest,
@@ -118,7 +117,6 @@ export class ArchipelagoController {
 
   updatesSubscribers: Set<UpdateSubscriber> = new Set()
 
-  activePeers: Set<string> = new Set()
   flushFrequency: number
   logger: ILoggerComponent.ILogger
 
@@ -135,10 +133,6 @@ export class ArchipelagoController {
       workerSrcPath: options.workerSrcPath
     })
 
-    this.startFlushLoop()
-  }
-
-  private startFlushLoop() {
     const loop = () => {
       if (!this.disposed) {
         const startTime = Date.now()
@@ -175,10 +169,6 @@ export class ArchipelagoController {
 
   setPeersPositions(...requests: PeerPositionChange[]): void {
     for (const req of requests) {
-      if (!this.activePeers.has(req.id)) {
-        this.activePeers.add(req.id)
-      }
-
       this.pendingUpdates.set(req.id, { type: 'set-position', ...req })
     }
   }
@@ -196,16 +186,11 @@ export class ArchipelagoController {
   clearPeers(...ids: string[]): void {
     for (const id of ids) {
       this.pendingUpdates.set(id, { type: 'clear' })
-      this.activePeers.delete(id)
     }
   }
 
   modifyOptions(options: UpdatableArchipelagoParameters) {
     this.workerController.sendMessageToWorker({ type: 'apply-options-update', updates: options })
-  }
-
-  async getPeersCount(): Promise<number> {
-    return this.activePeers.size
   }
 
   getIslandsCount(): Promise<number> {
@@ -242,12 +227,6 @@ export class ArchipelagoController {
 
   async getPeersData(ids: string[]): Promise<Record<string, PeerData>> {
     const request: Omit<GetPeersData, 'requestId'> = { type: 'get-peers-data', peerIds: ids }
-    return this.workerController.sendRequestToWorker(request)
-  }
-
-  async getPeerIds(): Promise<string[]> {
-    const request: Omit<GetPeerIds, 'requestId'> = { type: 'get-peer-ids' }
-
     return this.workerController.sendRequestToWorker(request)
   }
 }

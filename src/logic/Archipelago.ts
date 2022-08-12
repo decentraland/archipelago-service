@@ -13,8 +13,6 @@ import { findMax, popMax } from '../misc/utils'
 
 export interface IArchipelago {
   getIslandsCount(): number
-  getPeersCount(): number
-  getPeerIds(): string[]
   clearPeers(ids: string[]): IslandUpdates
   getIsland(id: string): Island | undefined
   getIslands(): Island[]
@@ -395,15 +393,7 @@ export class Archipelago implements IArchipelago {
     return this.islands.get(id)
   }
 
-  getPeersCount(): number {
-    return this.peers.size
-  }
-
   getIslandsCount(): number {
     return this.islands.size
-  }
-
-  getPeerIds(): string[] {
-    return [...this.peers.keys()]
   }
 }
