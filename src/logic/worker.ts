@@ -2,13 +2,10 @@ import { ILoggerComponent } from '@well-known-components/interfaces'
 import { WorkerOptions } from '../controllers/ArchipelagoController'
 import { IArchipelago, Archipelago } from '../logic/Archipelago'
 import { NullLogger } from '../misc/utils'
-import { IslandUpdates, PeerData } from '../types'
+import { IslandUpdates } from '../types'
 import {
   DisposeResponse,
-  GetPeerDataResponse,
-  GetPeersDataResponse,
   IslandResponse,
-  IslandsCountResponse,
   IslandsResponse,
   IslandsUpdated,
   WorkerMessage,
@@ -49,39 +46,10 @@ process.on('message', (message: WorkerMessage) => {
       process.send!(response)
       break
     }
-    case 'get-islands-count': {
-      const response: IslandsCountResponse = {
-        type: 'islands-count-response',
-        payload: archipelago.getIslandsCount(),
-        requestId: message.requestId
-      }
-      process.send!(response)
-      break
-    }
     case 'get-island': {
       const response: IslandResponse = {
         type: 'island-response',
         payload: archipelago.getIsland(message.islandId),
-        requestId: message.requestId
-      }
-
-      process.send!(response)
-      break
-    }
-    case 'get-peer-data': {
-      const response: GetPeerDataResponse = {
-        type: 'get-peer-data-response',
-        payload: archipelago.getPeerData(message.peerId),
-        requestId: message.requestId
-      }
-
-      process.send!(response)
-      break
-    }
-    case 'get-peers-data': {
-      const response: GetPeersDataResponse = {
-        type: 'get-peers-data-response',
-        payload: getPeersData(message.peerIds),
         requestId: message.requestId
       }
 
@@ -100,26 +68,6 @@ process.on('message', (message: WorkerMessage) => {
   }
 })
 
-function getPeersData(peerIds: string[]): Record<string, PeerData> {
-  const response: Record<string, PeerData> = {}
-  for (const id of peerIds) {
-    const data = archipelago.getPeerData(id)
-    if (typeof data !== 'undefined') {
-      response[id] = data
-    }
-  }
-
-  return response
-}
-
-function emitUpdates(updates: IslandUpdates) {
-  const updatesMessage: IslandsUpdated = {
-    type: 'islands-updated',
-    islandUpdates: updates
-  }
-  process.send!(updatesMessage)
-}
-
 function performArchipelagoOperation(operation: (archipelago: IArchipelago) => IslandUpdates, description: string) {
   setStatus('working')
   const startTime = Date.now()
@@ -127,7 +75,11 @@ function performArchipelagoOperation(operation: (archipelago: IArchipelago) => I
   logger.debug(`Processing ${description}`)
 
   const updates = operation(archipelago)
-  emitUpdates(updates)
+  const updatesMessage: IslandsUpdated = {
+    type: 'islands-updated',
+    islandUpdates: updates
+  }
+  process.send!(updatesMessage)
 
   logger.debug(`Processing ${description} took: ${Date.now() - startTime}`)
 
@@ -137,10 +89,6 @@ function performArchipelagoOperation(operation: (archipelago: IArchipelago) => I
 function setStatus(aStatus: 'idle' | 'working') {
   logger.info(`Setting worker status to ${aStatus}`)
   status = aStatus
-  sendStatus()
-}
-
-function sendStatus() {
   const message: WorkerStatusMessage = { type: 'worker-status', status }
   process.send?.(message)
 }

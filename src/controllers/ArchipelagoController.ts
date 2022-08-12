@@ -1,22 +1,13 @@
 import {
   ArchipelagoParameters,
   Island,
-  PeerData,
   PeerPositionChange,
   UpdatableArchipelagoParameters,
   UpdateSubscriber
 } from '../types'
 
 import { fork, ChildProcess } from 'child_process'
-import {
-  GetIsland,
-  GetPeerData,
-  GetPeersData,
-  WorkerMessage,
-  WorkerRequest,
-  WorkerResponse,
-  WorkerStatus
-} from '../messageTypes'
+import { GetIsland, WorkerMessage, WorkerRequest, WorkerResponse, WorkerStatus } from '../messageTypes'
 import { IdGenerator, sequentialIdGenerator } from '../misc/idGenerator'
 import { ILoggerComponent } from '@well-known-components/interfaces'
 
@@ -193,10 +184,6 @@ export class ArchipelagoController {
     this.workerController.sendMessageToWorker({ type: 'apply-options-update', updates: options })
   }
 
-  getIslandsCount(): Promise<number> {
-    return this.workerController.sendRequestToWorker({ type: 'get-islands-count' })
-  }
-
   subscribeToUpdates(subscriber: UpdateSubscriber): void {
     this.updatesSubscribers.add(subscriber)
   }
@@ -218,15 +205,5 @@ export class ArchipelagoController {
   async dispose() {
     this.disposed = true
     await this.workerController.dispose()
-  }
-
-  async getPeerData(id: string): Promise<PeerData | undefined> {
-    const request: Omit<GetPeerData, 'requestId'> = { type: 'get-peer-data', peerId: id }
-    return this.workerController.sendRequestToWorker(request)
-  }
-
-  async getPeersData(ids: string[]): Promise<Record<string, PeerData>> {
-    const request: Omit<GetPeersData, 'requestId'> = { type: 'get-peers-data', peerIds: ids }
-    return this.workerController.sendRequestToWorker(request)
   }
 }

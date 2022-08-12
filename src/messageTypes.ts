@@ -1,4 +1,4 @@
-import { PeerPositionChange, Island, IslandUpdates, PeerData, UpdatableArchipelagoParameters } from './types'
+import { PeerPositionChange, Island, IslandUpdates, UpdatableArchipelagoParameters } from './types'
 
 export type ApplyUpdates = {
   type: 'apply-updates'
@@ -21,10 +21,6 @@ export type GetIsland = {
   islandId: string
 } & Request
 
-export type GetIslandsCount = {
-  type: 'get-islands-count'
-} & Request
-
 export type IslandsUpdated = {
   type: 'islands-updated'
   islandUpdates: IslandUpdates
@@ -34,11 +30,6 @@ type Response = {
   requestId: string
   payload: any
 }
-
-export type IslandsCountResponse = {
-  type: 'islands-count-response'
-  payload: number
-} & Response
 
 export type IslandsResponse = {
   type: 'islands-response'
@@ -70,26 +61,6 @@ export type DisposeResponse = {
   requestId: string
 } & Response
 
-export type GetPeerData = {
-  type: 'get-peer-data'
-  peerId: string
-} & Request
-
-export type GetPeerDataResponse = {
-  type: 'get-peer-data-response'
-  payload: PeerData | undefined
-} & Response
-
-export type GetPeersData = {
-  type: 'get-peers-data'
-  peerIds: string[]
-} & Request
-
-export type GetPeersDataResponse = {
-  type: 'get-peers-data-response'
-  payload: Record<string, PeerData>
-} & Response
-
 export type WorkerStatus = 'working' | 'idle' | 'unknown'
 
 export type WorkerMessage =
@@ -100,14 +71,7 @@ export type WorkerMessage =
   | IslandsUpdated
   | WorkerStatusMessage
   | WorkerRequestError
-  | GetPeerData
-  | GetPeersData
 
-export type WorkerResponse =
-  | IslandsCountResponse
-  | IslandsResponse
-  | DisposeResponse
-  | GetPeerDataResponse
-  | GetPeersDataResponse
+export type WorkerResponse = IslandsResponse | DisposeResponse
 
-export type WorkerRequest = GetIslands | GetIslandsCount | GetIsland | DisposeRequest | GetPeerData | GetPeersData
+export type WorkerRequest = GetIslands | GetIsland | DisposeRequest
