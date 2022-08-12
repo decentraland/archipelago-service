@@ -10,8 +10,7 @@ import { IdGenerator, sequentialIdGenerator } from '../../src/misc/idGenerator'
 
 export const defaultArchipelagoOptions = {
   joinDistance: 64,
-  leaveDistance: 80,
-  wsRoomService: { url: 'test_url', secret: '123456' }
+  leaveDistance: 80
 }
 
 export function expectIslandWith(archipelago: Archipelago, ...ids: string[]) {

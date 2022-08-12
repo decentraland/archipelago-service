@@ -12,7 +12,7 @@ import { IdGenerator } from './misc/idGenerator'
 import { ITransportRegistryComponent } from './ports/transport-registry'
 
 export type Position3D = [number, number, number]
-export type Transport = 'livekit' | 'ws' | 'p2p'
+export type TransportType = 'livekit' | 'ws' | 'p2p'
 
 export type PeerData = {
   id: string
@@ -28,7 +28,6 @@ export type Island = {
   center: Position3D
   radius: number
   sequenceId: number
-  transport: Transport
 }
 
 export type ArchipelagoOptions = {
@@ -62,23 +61,9 @@ export type IslandUpdate = ChangeToIslandUpdate | LeaveIslandUpdate
 export type IslandUpdates = Record<string, IslandUpdate>
 export type UpdateSubscriber = (updates: IslandUpdates) => any
 
-export type ArchipelagoMetricPerTransport = {
-  transport: {
-    livekit: number
-    ws: number
-    p2p: number
-  }
-}
-
-export type ArchipelagoMetrics = {
-  peers: ArchipelagoMetricPerTransport
-  islands: ArchipelagoMetricPerTransport
-}
-
 export { IdGenerator } from './misc/idGenerator'
 
 export type ArchipelagoComponent = {
-  calculateMetrics(): Promise<ArchipelagoMetrics>
   clearPeers(...ids: string[]): void
   setPeersPositions(...requests: PeerPositionChange[]): void
   subscribeToUpdates(subscriber: UpdateSubscriber): void

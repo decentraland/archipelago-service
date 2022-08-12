@@ -22,6 +22,7 @@ export type PendingAuthRequest = {
 
 export type ITransportRegistryComponent = IBaseComponent & {
   onTransportConnection(ws: WebSocket): void
+  getAvailableTransports(): Promise<Transport[]>
 }
 
 export async function createTransportRegistryComponent(
@@ -37,7 +38,7 @@ export async function createTransportRegistryComponent(
   function onTransportConnection(ws: WebSocket) {
     count++
     const id = count
-    logger.info(`Transport Connection: ${id}`)
+    logger.info(`New transport Connection: ${id}`)
 
     const pendingAuthRequests = new Map<string, PendingAuthRequest>()
 
@@ -83,6 +84,7 @@ export async function createTransportRegistryComponent(
             init: { maxIslandSize, type }
           } = transportMessage.message
           transport.maxIslandSize = maxIslandSize
+          logger.info(`New transport Connection: ${id}, ${type}`)
           availableTransports.set(id, transport)
           break
         }
@@ -116,7 +118,6 @@ export async function createTransportRegistryComponent(
 
     ws.on('error', (error) => {
       logger.error(error)
-      ws.close()
     })
 
     ws.on('close', () => {
@@ -124,7 +125,18 @@ export async function createTransportRegistryComponent(
     })
   }
 
+  async function getAvailableTransports(): Promise<Transport[]> {
+    const result: Transport[] = []
+    for (const transport of availableTransports.values()) {
+      if (transport.availableSeats > 0) {
+        result.push(transport)
+      }
+    }
+    return result
+  }
+
   return {
-    onTransportConnection
+    onTransportConnection,
+    getAvailableTransports
   }
 }

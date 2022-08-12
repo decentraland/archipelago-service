@@ -18,8 +18,7 @@ describe('island-status-reporting', () => {
         radius: 100,
         maxPeers: 100,
         peers: [],
-        sequenceId: 10,
-        transport: 'p2p'
+        sequenceId: 10
       }
     ]
 

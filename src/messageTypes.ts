@@ -1,11 +1,4 @@
-import {
-  PeerPositionChange,
-  ArchipelagoMetrics,
-  Island,
-  IslandUpdates,
-  PeerData,
-  UpdatableArchipelagoParameters
-} from './types'
+import { PeerPositionChange, Island, IslandUpdates, PeerData, UpdatableArchipelagoParameters } from './types'
 
 export type ApplyUpdates = {
   type: 'apply-updates'
@@ -110,11 +103,6 @@ export type CalculateMetrics = {
   type: 'calculate-metrics'
 } & Request
 
-export type CalculateMetricsResponse = {
-  type: 'calculate-metrics-response'
-  payload: ArchipelagoMetrics
-} & Response
-
 export type WorkerStatus = 'working' | 'idle' | 'unknown'
 
 export type WorkerMessage =
@@ -137,7 +125,6 @@ export type WorkerResponse =
   | GetPeerDataResponse
   | GetPeersDataResponse
   | GetPeerIdsResponse
-  | CalculateMetricsResponse
 export type WorkerRequest =
   | GetIslands
   | GetIslandsCount
@@ -146,4 +133,3 @@ export type WorkerRequest =
   | GetPeerData
   | GetPeersData
   | GetPeerIds
-  | CalculateMetrics

@@ -7,9 +7,7 @@ import {
   PeerPositionChange,
   Island,
   ArchipelagoParameters,
-  UpdatableArchipelagoParameters,
-  Transport,
-  ArchipelagoMetrics
+  UpdatableArchipelagoParameters
 } from '../types'
 import { findMax, popMax } from '../misc/utils'
 import { IArchipelago } from './interfaces'
@@ -337,8 +335,6 @@ export class Archipelago implements IArchipelago {
   private createIsland(group: PeerData[], updates: IslandUpdates, affectedIslands: Set<string>): IslandUpdates {
     const newIslandId = this.generateId()
 
-    const transport: Transport = 'p2p'
-
     const island: InternalIsland = {
       id: newIslandId,
       peers: group,
@@ -360,9 +356,6 @@ export class Archipelago implements IArchipelago {
       get radius() {
         this._recalculateGeometryIfNeeded()
         return this._radius!
-      },
-      get transport() {
-        return transport
       }
     }
 
@@ -401,28 +394,5 @@ export class Archipelago implements IArchipelago {
 
   getPeerIds(): string[] {
     return [...this.peers.keys()]
-  }
-
-  calculateMetrics(): ArchipelagoMetrics {
-    const islands = Array.from(this.islands.values())
-
-    const islandsFilter = (transport: Transport) => (island: InternalIsland) =>
-      island.transport === transport && island.peers.length
-
-    const peersCount = (internalIslands: InternalIsland[]) =>
-      internalIslands.reduce((total, island) => total + island.peers.length, 0)
-
-    const livekitIslands = islands.filter(islandsFilter('livekit'))
-    const wsIslands = islands.filter(islandsFilter('ws'))
-    const p2pIslands = islands.filter(islandsFilter('p2p'))
-
-    return {
-      islands: {
-        transport: { livekit: livekitIslands.length, ws: wsIslands.length, p2p: p2pIslands.length }
-      },
-      peers: {
-        transport: { livekit: peersCount(livekitIslands), ws: peersCount(wsIslands), p2p: peersCount(p2pIslands) }
-      }
-    }
   }
 }

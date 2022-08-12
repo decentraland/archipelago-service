@@ -1,11 +1,4 @@
-import {
-  Island,
-  IslandUpdates,
-  PeerPositionChange,
-  ArchipelagoMetrics,
-  PeerData,
-  UpdatableArchipelagoParameters
-} from '../types'
+import { Island, IslandUpdates, PeerPositionChange, PeerData, UpdatableArchipelagoParameters } from '../types'
 
 export interface IArchipelago {
   getIslandsCount(): number
@@ -17,5 +10,4 @@ export interface IArchipelago {
   getPeerData(id: string): PeerData | undefined
   setPeersPositions(requests: PeerPositionChange[]): IslandUpdates
   modifyOptions(options: UpdatableArchipelagoParameters): IslandUpdates
-  calculateMetrics(): ArchipelagoMetrics
 }

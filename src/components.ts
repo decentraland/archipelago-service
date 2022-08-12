@@ -9,6 +9,7 @@ import { metricDeclarations } from './metrics'
 import { ArchipelagoController } from './controllers/ArchipelagoController'
 import { createNatsComponent } from '@well-known-components/nats-component'
 import { createTransportRegistryComponent } from './ports/transport-registry'
+import { WebSocketServer } from 'ws'
 
 export async function createArchipelagoComponent(
   config: IConfigComponent,
@@ -39,7 +40,9 @@ export async function initComponents(): Promise<AppComponents> {
   const config = await createDotEnvConfigComponent({ path: ['.env.default', '.env'] })
 
   const logs = await createLogComponent({})
-  const server = await createServerComponent<GlobalContext>({ config, logs }, {})
+
+  const wss = new WebSocketServer({ noServer: true })
+  const server = await createServerComponent<GlobalContext>({ config, logs, ws: wss }, {})
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })

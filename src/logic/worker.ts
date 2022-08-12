@@ -5,7 +5,6 @@ import { IArchipelago } from '../domain/interfaces'
 import { NullLogger } from '../misc/utils'
 import { IslandUpdates, PeerData } from '../types'
 import {
-  CalculateMetricsResponse,
   DisposeResponse,
   GetPeerDataResponse,
   GetPeerIdsResponse,
@@ -105,15 +104,6 @@ process.on('message', (message: WorkerMessage) => {
         type: 'get-peer-ids-response',
         requestId: message.requestId,
         payload: archipelago.getPeerIds()
-      }
-      process.send!(response)
-      break
-    }
-    case 'calculate-metrics': {
-      const response: CalculateMetricsResponse = {
-        type: 'calculate-metrics-response',
-        requestId: message.requestId,
-        payload: archipelago.calculateMetrics()
       }
       process.send!(response)
       break

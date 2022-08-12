@@ -1,5 +1,4 @@
 import {
-  ArchipelagoMetrics,
   ArchipelagoParameters,
   Island,
   PeerData,
@@ -11,7 +10,6 @@ import {
 import { fork, ChildProcess } from 'child_process'
 import {
   GetIsland,
-  CalculateMetrics,
   GetPeerData,
   GetPeerIds,
   GetPeersData,
@@ -250,11 +248,6 @@ export class ArchipelagoController {
   async getPeerIds(): Promise<string[]> {
     const request: Omit<GetPeerIds, 'requestId'> = { type: 'get-peer-ids' }
 
-    return this.workerController.sendRequestToWorker(request)
-  }
-
-  async calculateMetrics(): Promise<ArchipelagoMetrics> {
-    const request: Omit<CalculateMetrics, 'requestId'> = { type: 'calculate-metrics' }
     return this.workerController.sendRequestToWorker(request)
   }
 }

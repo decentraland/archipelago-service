@@ -16,8 +16,7 @@ describe('publishing', () => {
       peers: [
         { id: 'peer2', position: [0, 0, 0] },
         { id: 'peer3', position: [0, 0, 0] }
-      ],
-      transport: 'p2p'
+      ]
     }
 
     let registeredSubscriber: UpdateSubscriber | undefined = undefined

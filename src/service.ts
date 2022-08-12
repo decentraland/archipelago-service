@@ -1,7 +1,6 @@
 import { Lifecycle } from '@well-known-components/interfaces'
 import { setupIslandsStatusReporting } from './controllers/islands-status-report'
 import { setupListener } from './controllers/listener'
-import { setupMetrics } from './controllers/metrics'
 import { setupPublishing } from './controllers/publish'
 import { setupRouter } from './controllers/routes'
 import { setupServiceDiscovery } from './controllers/service-discovery'
@@ -30,7 +29,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  const { nats, config, logs, metrics, archipelago } = components
+  const { nats, config, logs, archipelago } = components
 
   const start = async (s: Promise<Startable>) => {
     const { start } = await s
@@ -40,6 +39,5 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   await setupListener({ nats, archipelago, config, logs })
   await setupPublishing({ nats, archipelago })
   await start(setupServiceDiscovery({ nats, logs, config }))
-  await start(setupMetrics({ config, logs, metrics, archipelago }))
   await start(setupIslandsStatusReporting({ nats, logs, config, archipelago }))
 }
