@@ -57,11 +57,8 @@ export type LeaveIslandUpdate = {
   islandId: string
 }
 
-export type IslandUpdate = ChangeToIslandUpdate | LeaveIslandUpdate
-export type IslandUpdates = Record<string, IslandUpdate>
+export type IslandUpdates = Record<string, ChangeToIslandUpdate | LeaveIslandUpdate>
 export type UpdateSubscriber = (updates: IslandUpdates) => any
-
-export { IdGenerator } from './misc/idGenerator'
 
 export type ArchipelagoComponent = {
   clearPeers(...ids: string[]): void

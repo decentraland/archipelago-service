@@ -8,7 +8,7 @@ import {
   IslandResponse,
   IslandsResponse,
   IslandsUpdated,
-  WorkerMessage,
+  WorkerRequest,
   WorkerStatusMessage
 } from '../messageTypes'
 
@@ -22,7 +22,7 @@ const logger: ILoggerComponent.ILogger = options.logging ? console : NullLogger
 
 let status: 'idle' | 'working' = 'idle'
 
-process.on('message', (message: WorkerMessage) => {
+process.on('message', (message: WorkerRequest) => {
   switch (message.type) {
     case 'apply-updates':
       const { clearUpdates, positionUpdates } = message.updates

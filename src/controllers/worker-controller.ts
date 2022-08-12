@@ -7,7 +7,7 @@ import {
 } from '../types'
 
 import { fork, ChildProcess } from 'child_process'
-import { GetIsland, WorkerMessage, WorkerRequest, WorkerResponse, WorkerStatus } from '../messageTypes'
+import { GetIsland, WorkerRequest, WorkerResponse, WorkerStatus } from '../messageTypes'
 import { IdGenerator, sequentialIdGenerator } from '../misc/idGenerator'
 import { ILoggerComponent } from '@well-known-components/interfaces'
 
@@ -125,7 +125,7 @@ export class ArchipelagoWorkerController {
     this.updatesSubscribers.delete(subscriber)
   }
 
-  handleWorkerMessage(message: WorkerMessage) {
+  handleWorkerMessage(message: WorkerResponse) {
     switch (message.type) {
       case 'islands-updated': {
         for (const subscriber of this.updatesSubscribers) {
@@ -141,7 +141,7 @@ export class ArchipelagoWorkerController {
       this.activeWorkerRequests[requestId]?.reject(error)
       delete this.activeWorkerRequests[requestId]
     } else if ('requestId' in message) {
-      const { requestId, payload } = message as WorkerResponse
+      const { requestId, payload } = message
       this.activeWorkerRequests[requestId]?.resolve(payload)
       delete this.activeWorkerRequests[requestId]
     }
@@ -153,7 +153,7 @@ export class ArchipelagoWorkerController {
     this.worker.kill()
   }
 
-  sendMessageToWorker(message: WorkerMessage) {
+  sendMessageToWorker(message: WorkerRequest) {
     this.worker.send(message)
   }
 
@@ -163,7 +163,7 @@ export class ArchipelagoWorkerController {
     return new Promise<T>((resolve, reject) => {
       this.activeWorkerRequests[requestId] = { resolve, reject }
 
-      this.sendMessageToWorker({ ...message, requestId } as WorkerMessage)
+      this.sendMessageToWorker({ ...message, requestId } as WorkerRequest)
 
       setTimeout(() => {
         if (this.activeWorkerRequests[requestId]) {
