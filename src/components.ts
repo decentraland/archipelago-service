@@ -6,22 +6,22 @@ import { createFetchComponent } from './ports/fetch'
 import { createMetricsComponent } from '@well-known-components/metrics'
 import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
-import { ArchipelagoWorkerController } from './controllers/worker-controller'
+import { WorkerController } from './controllers/worker-controller'
 import { createNatsComponent } from '@well-known-components/nats-component'
 import { createTransportRegistryComponent } from './ports/transport-registry'
 import { WebSocketServer } from 'ws'
 
-export async function createArchipelagoComponent(
+export async function createWorkerControllerComponent(
   config: IConfigComponent,
   logs: ILoggerComponent
-): Promise<ArchipelagoWorkerController> {
+): Promise<WorkerController> {
   const flushFrequency = await config.requireNumber('ARCHIPELAGO_FLUSH_FREQUENCY')
   const joinDistance = await config.requireNumber('ARCHIPELAGO_JOIN_DISTANCE')
   const leaveDistance = await config.requireNumber('ARCHIPELAGO_LEAVE_DISTANCE')
   const maxPeersPerIsland = await config.requireNumber('ARCHIPELAGO_MAX_PEERS_PER_ISLAND')
   const workerSrcPath = await config.getString('ARCHIPELAGO_WORKER_SRC_PATH')
 
-  const controller = new ArchipelagoWorkerController({
+  const controller = new WorkerController({
     flushFrequency,
     archipelagoParameters: {
       joinDistance,
@@ -47,7 +47,7 @@ export async function initComponents(): Promise<AppComponents> {
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const nats = await createNatsComponent({ config, logs })
-  const archipelago = await createArchipelagoComponent(config, logs)
+  const workerController = await createWorkerControllerComponent(config, logs)
   const transportRegistry = await createTransportRegistryComponent({ logs })
 
   return {
@@ -58,7 +58,7 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     nats,
-    archipelago,
+    workerController,
     transportRegistry
   }
 }

@@ -24,10 +24,10 @@ describe('island-status-reporting', () => {
 
     const s = nats.subscribe('archipelago.islands')
 
-    const archipelago = {
+    const workerController = {
       getIslands: () => Promise.resolve(islands)
     }
-    const { publishReport } = await setupIslandsStatusReporting({ nats, logs, config, archipelago })
+    const { publishReport } = await setupIslandsStatusReporting({ nats, logs, config, workerController })
     await publishReport()
 
     for await (const message of s.generator) {

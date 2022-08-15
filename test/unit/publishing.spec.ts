@@ -20,7 +20,7 @@ describe('publishing', () => {
     }
 
     let registeredSubscriber: UpdateSubscriber | undefined = undefined
-    const archipelago = {
+    const workerController = {
       subscribeToUpdates(subscriber: UpdateSubscriber) {
         registeredSubscriber = subscriber
       },
@@ -29,7 +29,7 @@ describe('publishing', () => {
       }
     }
 
-    await setupPublishing({ nats, archipelago })
+    await setupPublishing({ nats, workerController })
 
     expect(registeredSubscriber).toBeTruthy()
 
@@ -71,7 +71,7 @@ describe('publishing', () => {
     const nats = await createLocalNatsComponent()
 
     let registeredSubscriber: UpdateSubscriber | undefined = undefined
-    const archipelago = {
+    const workerController = {
       subscribeToUpdates(subscriber: UpdateSubscriber) {
         registeredSubscriber = subscriber
       },
@@ -80,7 +80,7 @@ describe('publishing', () => {
       }
     }
 
-    await setupPublishing({ nats, archipelago })
+    await setupPublishing({ nats, workerController })
 
     expect(registeredSubscriber).toBeTruthy()
 

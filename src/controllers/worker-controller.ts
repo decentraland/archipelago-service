@@ -11,7 +11,7 @@ import { GetIsland, WorkerRequest, WorkerResponse, WorkerStatus } from '../messa
 import { IdGenerator, sequentialIdGenerator } from '../misc/idGenerator'
 import { ILoggerComponent } from '@well-known-components/interfaces'
 
-export type ArchipelagoWorkerControllerOptions = {
+export type Options = {
   flushFrequency?: number
   archipelagoParameters: ArchipelagoParameters
   workerSrcPath?: string
@@ -27,7 +27,7 @@ type PendingWorkerRequest = { resolve: (arg: any) => any; reject: (error: any) =
 
 export type WorkerOptions = { archipelagoParameters: ArchipelagoParameters; logging: boolean }
 
-export class ArchipelagoWorkerController {
+export class WorkerController {
   worker: ChildProcess
 
   pendingUpdates: Map<string, PeerUpdate> = new Map()
@@ -43,7 +43,7 @@ export class ArchipelagoWorkerController {
 
   disposed: boolean = false
 
-  constructor(options: ArchipelagoWorkerControllerOptions) {
+  constructor(options: Options) {
     const { logs } = options.components
     this.logger = logs ? logs.getLogger('Archipelago') : console
 

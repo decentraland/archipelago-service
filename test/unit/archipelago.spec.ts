@@ -1,4 +1,4 @@
-import { Archipelago } from '../../src/domain/Archipelago'
+import { Archipelago } from '../../src/logic/Archipelago'
 
 import expect from 'assert'
 import { PeerPositionChange, IslandUpdates, ChangeToIslandUpdate } from '../../src/types'

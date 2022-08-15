@@ -1,12 +1,12 @@
 import { Reader } from 'protobufjs/minimal'
-import { AppComponents, ArchipelagoComponent, PeerPositionChange } from '../types'
+import { AppComponents, WorkerControllerComponent, PeerPositionChange } from '../types'
 import { HeartbeatMessage } from './proto/archipelago'
 
 type Components = Pick<AppComponents, 'nats' | 'logs' | 'config'> & {
-  archipelago: Pick<ArchipelagoComponent, 'clearPeers' | 'setPeersPositions'>
+  workerController: Pick<WorkerControllerComponent, 'clearPeers' | 'setPeersPositions'>
 }
 
-export async function setupListener({ nats, archipelago, config, logs }: Components) {
+export async function setupListener({ nats, workerController, config, logs }: Components) {
   const checkHeartbeatInterval = await config.requireNumber('CHECK_HEARTBEAT_INTERVAL')
   const logger = logs.getLogger('NATS listener')
 
@@ -21,7 +21,7 @@ export async function setupListener({ nats, archipelago, config, logs }: Compone
       .map(([peerId, _]) => peerId)
 
     inactivePeers.forEach((peerId) => lastPeerHeartbeats.delete(peerId))
-    archipelago.clearPeers(...inactivePeers)
+    workerController.clearPeers(...inactivePeers)
   }, checkHeartbeatInterval)
 
   const connectSubscription = nats.subscribe('peer.*.connect')
@@ -29,7 +29,7 @@ export async function setupListener({ nats, archipelago, config, logs }: Compone
     for await (const message of connectSubscription.generator) {
       try {
         const id = message.subject.split('.')[1]
-        archipelago.clearPeers(id)
+        workerController.clearPeers(id)
       } catch (err: any) {
         logger.error(`cannot process peer_connect message ${err.message}`)
       }
@@ -41,7 +41,7 @@ export async function setupListener({ nats, archipelago, config, logs }: Compone
     for await (const message of disconnectSubscription.generator) {
       try {
         const id = message.subject.split('.')[1]
-        archipelago.clearPeers(id)
+        workerController.clearPeers(id)
       } catch (err: any) {
         logger.error(`cannot process peer_disconnect message ${err.message}`)
       }
@@ -62,7 +62,7 @@ export async function setupListener({ nats, archipelago, config, logs }: Compone
         }
 
         lastPeerHeartbeats.set(peerPositionChange.id, Date.now())
-        archipelago.setPeersPositions(peerPositionChange)
+        workerController.setPeersPositions(peerPositionChange)
       } catch (err: any) {
         logger.error(`cannot process heartbeat message ${err.message}`)
       }

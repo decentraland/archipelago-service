@@ -29,15 +29,15 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  const { nats, config, logs, archipelago } = components
+  const { nats, config, logs, workerController } = components
 
   const start = async (s: Promise<Startable>) => {
     const { start } = await s
     await start()
   }
 
-  await setupListener({ nats, archipelago, config, logs })
-  await setupPublishing({ nats, archipelago })
+  await setupListener({ nats, workerController, config, logs })
+  await setupPublishing({ nats, workerController })
   await start(setupServiceDiscovery({ nats, logs, config }))
-  await start(setupIslandsStatusReporting({ nats, logs, config, archipelago }))
+  await start(setupIslandsStatusReporting({ nats, logs, config, workerController }))
 }

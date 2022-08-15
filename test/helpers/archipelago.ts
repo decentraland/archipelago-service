@@ -1,6 +1,6 @@
-import { ArchipelagoController } from '../../src/controllers/ArchipelagoController'
+import { WorkerController } from '../../src/controllers/worker-controller'
 import { ArchipelagoOptions, Island, PeerPositionChange, Position3D } from '../../src/types'
-import { Archipelago } from '../../src/domain/Archipelago'
+import { Archipelago } from '../../src/logic/Archipelago'
 import { BaseClosure, evaluate } from 'tiny-clojure'
 import { NodeError } from 'tiny-clojure/dist/types'
 import assert from 'assert'
@@ -40,11 +40,11 @@ export function expectIslandsWith(archipelago: Archipelago, ...islandIds: string
   assert.strictEqual(archipelago.getIslands().length, islandIds.length)
 }
 
-export async function expectIslandInControllerWith(archipelago: ArchipelagoController, ...peerIds: string[]) {
+export async function expectIslandInControllerWith(archipelago: WorkerController, ...peerIds: string[]) {
   expectIslandWithPeerIdsIn(peerIds, await archipelago.getIslands())
 }
 
-export async function expectIslandsInControllerWith(archipelago: ArchipelagoController, ...peerGroups: string[][]) {
+export async function expectIslandsInControllerWith(archipelago: WorkerController, ...peerGroups: string[][]) {
   await Promise.all(peerGroups.map((ids) => expectIslandInControllerWith(archipelago, ...ids)))
 }
 

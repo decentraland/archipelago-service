@@ -1,12 +1,12 @@
-import { AppComponents, ArchipelagoComponent, IslandUpdates, PeerData } from '../types'
+import { AppComponents, WorkerControllerComponent, IslandUpdates, PeerData } from '../types'
 import { IslandChangedMessage, JoinIslandMessage, LeftIslandMessage } from './proto/archipelago'
 
 type Components = Pick<AppComponents, 'nats'> & {
-  archipelago: Pick<ArchipelagoComponent, 'subscribeToUpdates' | 'getIsland'>
+  workerController: Pick<WorkerControllerComponent, 'subscribeToUpdates' | 'getIsland'>
 }
 
-export async function setupPublishing({ nats, archipelago }: Components) {
-  archipelago.subscribeToUpdates(async (updates: IslandUpdates) => {
+export async function setupPublishing({ nats, workerController }: Components) {
+  workerController.subscribeToUpdates(async (updates: IslandUpdates) => {
     // Prevent processing updates if there are no changes
     if (!Object.keys(updates).length) {
       return
@@ -15,7 +15,7 @@ export async function setupPublishing({ nats, archipelago }: Components) {
     Object.keys(updates).forEach(async (peerId) => {
       const update = updates[peerId]
       if (update.action === 'changeTo') {
-        const island = await archipelago.getIsland(update.islandId)
+        const island = await workerController.getIsland(update.islandId)
         if (!island) {
           return
         }
