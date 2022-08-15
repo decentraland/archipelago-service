@@ -36,7 +36,6 @@ const squaredDistance = (p1: Position3D, p2: Position3D) => {
 
 export function defaultOptions() {
   return {
-    maxPeersPerIsland: 200,
     islandIdGenerator: sequentialIdGenerator('I')
   }
 }
@@ -61,6 +60,7 @@ function squared(n: number) {
 }
 
 type InternalIsland = Island & {
+  transportId: number
   _center?: Position3D
   _radius?: number
   _geometryDirty: boolean
@@ -114,6 +114,21 @@ export class Archipelago implements IArchipelago {
 
   onTransportsUpdate(transports: Transport[]): IslandUpdates {
     this.transports = transports
+
+    const transportIds = new Set<number>()
+    for (const transport of transports) {
+      transportIds.add(transport.id)
+    }
+
+    // NOTE(hugo): we don't recreate islands, this will happen naturally if
+    // the transport is actually down, but we don't want to assign new peers
+    // there
+    for (const island of this.islands.values()) {
+      if (!transportIds.has(island.transportId)) {
+        island.maxPeers = 0
+      }
+    }
+
     return {}
   }
 
@@ -228,7 +243,7 @@ export class Archipelago implements IArchipelago {
 
     if (canMerge(islandToMergeInto, anIsland)) {
       islandToMergeInto.peers.push(...anIsland.peers)
-      updates = this.setPeersIsland(islandToMergeInto.id, anIsland.peers, updates)
+      updates = this.setPeersIsland(islandToMergeInto, anIsland.peers, updates)
       this.islands.delete(anIsland.id)
       this.markGeometryDirty(islandToMergeInto)
 
@@ -322,10 +337,39 @@ export class Archipelago implements IArchipelago {
   private createIsland(group: PeerData[], updates: IslandUpdates, affectedIslands: Set<string>): IslandUpdates {
     const newIslandId = this.options.islandIdGenerator.generateId()
 
+    const reservedSeatsPerTransport = new Map<number, number>()
+    for (const island of this.islands.values()) {
+      if (island.transportId === 0) {
+        continue
+      }
+
+      const reserved = reservedSeatsPerTransport.get(island.transportId) || 0
+      reservedSeatsPerTransport.set(island.transportId, reserved + island.maxPeers)
+    }
+
+    let transportId = 0 // p2p
+    let maxPeers = 0
+
+    for (const transport of this.transports) {
+      if (transport.id === 0) {
+        if (transportId === 0) {
+          maxPeers = transport.maxIslandSize
+        }
+        continue
+      }
+
+      const reservedSeats = reservedSeatsPerTransport.get(transport.id) || 0
+      if (transport.availableSeats - reservedSeats >= transport.maxIslandSize) {
+        transportId = transport.id
+        maxPeers = transport.maxIslandSize
+      }
+    }
+
     const island: InternalIsland = {
       id: newIslandId,
+      transportId,
       peers: group,
-      maxPeers: this.options.maxPeersPerIsland,
+      maxPeers,
       sequenceId: ++this.currentSequence,
       _geometryDirty: true,
       _recalculateGeometryIfNeeded() {
@@ -349,14 +393,19 @@ export class Archipelago implements IArchipelago {
     this.islands.set(newIslandId, island)
     affectedIslands.add(newIslandId)
 
-    return this.setPeersIsland(newIslandId, group, updates)
+    return this.setPeersIsland(island, group, updates)
   }
 
-  private setPeersIsland(islandId: string, peers: PeerData[], updates: IslandUpdates): IslandUpdates {
+  private setPeersIsland(island: InternalIsland, peers: PeerData[], updates: IslandUpdates): IslandUpdates {
     for (const peer of peers) {
       const previousIslandId = peer.islandId
-      peer.islandId = islandId
-      updates[peer.id] = { action: 'changeTo', islandId, fromIslandId: previousIslandId, transportId: 0 }
+      peer.islandId = island.id
+      updates[peer.id] = {
+        action: 'changeTo',
+        islandId: island.id,
+        fromIslandId: previousIslandId,
+        transportId: island.transportId
+      }
     }
 
     return updates

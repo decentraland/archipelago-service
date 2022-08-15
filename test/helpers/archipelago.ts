@@ -1,5 +1,5 @@
 import { WorkerController } from '../../src/controllers/worker-controller'
-import { ArchipelagoOptions, Island, PeerPositionChange, Position3D } from '../../src/types'
+import { Transport, ArchipelagoOptions, Island, PeerPositionChange, Position3D } from '../../src/types'
 import { Archipelago } from '../../src/logic/Archipelago'
 import { BaseClosure, evaluate } from 'tiny-clojure'
 import { NodeError } from 'tiny-clojure/dist/types'
@@ -73,7 +73,25 @@ export function setMultiplePeersAround(
 export function configureLibs(closure: BaseClosure) {
   // (configure { options })
   closure.defJsFunction('configure', (options?: ArchipelagoOptions) => {
-    closure.def('archipelago', new Archipelago(options ?? defaultArchipelagoOptions))
+    const archipelago = new Archipelago(options ?? defaultArchipelagoOptions)
+    archipelago.onTransportsUpdate([
+      {
+        id: 0,
+        availableSeats: -1,
+        usersCount: -1,
+        maxIslandSize: 200
+      }
+    ])
+    closure.def('archipelago', archipelago)
+  })
+
+  closure.defJsFunction('configureTransports', (args: [number, number, number, number][]) => {
+    const archipelago = closure.get('archipelago') as Archipelago
+    archipelago.onTransportsUpdate(
+      args.map(([id, availableSeats, usersCount, maxIslandSize]) => {
+        return { id, availableSeats, usersCount, maxIslandSize }
+      })
+    )
   })
 
   // (move ...[peer x y z])
@@ -113,6 +131,17 @@ export function configureLibs(closure: BaseClosure) {
     expectIslandsCount(archipelago, count)
   })
 
+  closure.defJsFunction('ensureIslandsCountWithTransport', (expectedCount: number, transportId: number, arch) => {
+    const archipelago = (arch || closure.get('archipelago')) as Archipelago
+    let count = 0
+    for (const island of archipelago.getIslands()) {
+      if (transportId === island.transportId) {
+        count++
+      }
+    }
+    assert(expectedCount === count)
+  })
+
   // (disconnect [...ids] arch?)
   closure.defJsFunction('disconnect', (ids, arch) => {
     const archipelago = (arch || closure.get('archipelago')) as Archipelago
@@ -127,6 +156,10 @@ export function configureLibs(closure: BaseClosure) {
   // (get obj ...path)
   closure.defJsFunction('get', (obj, ...path: string[]) => {
     return get(obj, path)
+  })
+
+  closure.defJsFunction('echo', (args: any) => {
+    console.log(args)
   })
 
   // (* ...args)

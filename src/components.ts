@@ -18,15 +18,13 @@ export async function createWorkerControllerComponent(
   const flushFrequency = await config.requireNumber('ARCHIPELAGO_FLUSH_FREQUENCY')
   const joinDistance = await config.requireNumber('ARCHIPELAGO_JOIN_DISTANCE')
   const leaveDistance = await config.requireNumber('ARCHIPELAGO_LEAVE_DISTANCE')
-  const maxPeersPerIsland = await config.requireNumber('ARCHIPELAGO_MAX_PEERS_PER_ISLAND')
   const workerSrcPath = await config.getString('ARCHIPELAGO_WORKER_SRC_PATH')
 
   const controller = new WorkerController({
     flushFrequency,
     archipelagoParameters: {
       joinDistance,
-      leaveDistance,
-      maxPeersPerIsland
+      leaveDistance
     },
     workerSrcPath,
     components: { logs }

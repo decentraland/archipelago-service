@@ -14,6 +14,15 @@ describe('archipelago', () => {
       joinDistance: 64,
       leaveDistance: 80
     })
+
+    archipelago.onTransportsUpdate([
+      {
+        id: 0,
+        availableSeats: -1,
+        usersCount: -1,
+        maxIslandSize: 200
+      }
+    ])
   })
 
   function setPositionArrays(...positions: PositionWithId[]) {

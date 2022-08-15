@@ -31,7 +31,6 @@ export type Island = {
 }
 
 export type ArchipelagoOptions = {
-  maxPeersPerIsland: number
   joinDistance: number
   leaveDistance: number
   islandIdGenerator: IdGenerator
