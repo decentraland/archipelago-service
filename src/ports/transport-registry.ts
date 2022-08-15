@@ -13,7 +13,7 @@ export type Transport = {
   getConnectionString(userId: string, roomId: string): Promise<string>
 }
 
-export type PendingAuthRequest = {
+type PendingAuthRequest = {
   started: number
   resolve: (connectionString: string) => void
   reject: (error: Error) => void

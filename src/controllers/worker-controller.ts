@@ -1,10 +1,4 @@
-import {
-  ArchipelagoParameters,
-  Island,
-  PeerPositionChange,
-  UpdatableArchipelagoParameters,
-  UpdateSubscriber
-} from '../types'
+import { ArchipelagoParameters, Island, PeerPositionChange, UpdateSubscriber, Transport } from '../types'
 
 import { fork, ChildProcess } from 'child_process'
 import { GetIsland, WorkerRequest, WorkerResponse, WorkerStatus } from '../messageTypes'
@@ -30,7 +24,8 @@ export type WorkerOptions = { archipelagoParameters: ArchipelagoParameters; logg
 export class WorkerController {
   worker: ChildProcess
 
-  pendingUpdates: Map<string, PeerUpdate> = new Map()
+  pendingPeerUpdates: Map<string, PeerUpdate> = new Map()
+  transports: Transport[] = []
 
   updatesSubscribers: Set<UpdateSubscriber> = new Set()
 
@@ -70,10 +65,10 @@ export class WorkerController {
   }
 
   flush() {
-    if (this.pendingUpdates.size > 0 && this.workerStatus === 'idle') {
-      this.logger.info(`Flushing ${this.pendingUpdates.size} updates`)
-      const updatesToFlush = this.pendingUpdates
-      this.pendingUpdates = new Map()
+    if (this.pendingPeerUpdates.size > 0 && this.workerStatus === 'idle') {
+      this.logger.info(`Flushing ${this.pendingPeerUpdates.size} updates`)
+      const updatesToFlush = this.pendingPeerUpdates
+      this.pendingPeerUpdates = new Map()
 
       const positionUpdates: PeerPositionChange[] = []
       const clearUpdates: string[] = []
@@ -87,13 +82,20 @@ export class WorkerController {
         }
       }
 
-      this.sendMessageToWorker({ type: 'apply-updates', updates: { positionUpdates, clearUpdates } })
+      this.sendMessageToWorker({
+        type: 'apply-updates',
+        updates: { positionUpdates, clearUpdates, transports: this.transports }
+      })
     }
   }
 
-  setPeersPositions(...requests: PeerPositionChange[]): void {
+  setTransports(transports: Transport[]): void {
+    this.transports = transports
+  }
+
+  onPeerPositionsUpdate(...requests: PeerPositionChange[]): void {
     for (const req of requests) {
-      this.pendingUpdates.set(req.id, { type: 'set-position', ...req })
+      this.pendingPeerUpdates.set(req.id, { type: 'set-position', ...req })
     }
   }
 
@@ -107,14 +109,10 @@ export class WorkerController {
     return this.sendRequestToWorker(req)
   }
 
-  clearPeers(...ids: string[]): void {
+  onPeersRemoved(...ids: string[]): void {
     for (const id of ids) {
-      this.pendingUpdates.set(id, { type: 'clear' })
+      this.pendingPeerUpdates.set(id, { type: 'clear' })
     }
-  }
-
-  modifyOptions(options: UpdatableArchipelagoParameters) {
-    this.sendMessageToWorker({ type: 'apply-options-update', updates: options })
   }
 
   subscribeToUpdates(subscriber: UpdateSubscriber): void {

@@ -13,7 +13,7 @@ describe('nats listener', () => {
   let nats: INatsComponent
   let listener: { stop: () => void } | undefined = undefined
 
-  let workerController: Pick<WorkerControllerComponent, 'clearPeers' | 'setPeersPositions'>
+  let workerController: Pick<WorkerControllerComponent, 'onPeersRemoved' | 'onPeerPositionsUpdate'>
 
   const config = createConfigComponent({
     CHECK_HEARTBEAT_INTERVAL: '100'
@@ -21,8 +21,8 @@ describe('nats listener', () => {
 
   beforeEach(() => {
     workerController = {
-      clearPeers(...peers: string[]): void {},
-      setPeersPositions(..._: PeerPositionChange[]): void {}
+      onPeersRemoved(...peers: string[]): void {},
+      onPeerPositionsUpdate(..._: PeerPositionChange[]): void {}
     }
   })
 
@@ -38,23 +38,23 @@ describe('nats listener', () => {
   })
 
   it('should listen connections and clear peers', async () => {
-    const clearPeersStub = jest.spyOn(workerController, 'clearPeers')
+    const onPeersRemovedStub = jest.spyOn(workerController, 'onPeersRemoved')
     listener = await setupListener({ logs, nats, workerController, config })
     nats.publish('peer.peer1.connect')
     await delay(100)
-    expect(clearPeersStub).toHaveBeenCalledWith('peer1')
+    expect(onPeersRemovedStub).toHaveBeenCalledWith('peer1')
   })
 
   it('should listen disconnections and clear peers', async () => {
-    const clearPeersStub = jest.spyOn(workerController, 'clearPeers')
+    const onPeersRemovedStub = jest.spyOn(workerController, 'onPeersRemoved')
     listener = await setupListener({ logs, nats, workerController, config })
     nats.publish('peer.peer1.disconnect')
     await delay(100)
-    expect(clearPeersStub).toHaveBeenCalledWith('peer1')
+    expect(onPeersRemovedStub).toHaveBeenCalledWith('peer1')
   })
 
   it('should listen hearbeats and set positions', async () => {
-    const setPeersPositionsStub = jest.spyOn(workerController, 'setPeersPositions')
+    const onPeerPositionsUpdateStub = jest.spyOn(workerController, 'onPeerPositionsUpdate')
     listener = await setupListener({ logs, nats, workerController, config })
     nats.publish(
       'client-proto.peer.peer1.heartbeat',
@@ -67,7 +67,7 @@ describe('nats listener', () => {
       }).finish()
     )
     await delay(100)
-    expect(setPeersPositionsStub).toHaveBeenCalledWith({
+    expect(onPeerPositionsUpdateStub).toHaveBeenCalledWith({
       id: 'peer1',
       position: [0, 0, 0]
     })

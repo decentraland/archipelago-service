@@ -21,7 +21,7 @@ describe('archipelago', () => {
   }
 
   function setPositions(...positions: PeerPositionChange[]) {
-    return archipelago.setPeersPositions(positions)
+    return archipelago.onPeersPositionsUpdate(positions)
   }
 
   it('joins two close peers in island', () => {
@@ -109,7 +109,7 @@ describe('archipelago', () => {
 
     expectIslandsWith(archipelago, ['1', '2', '3', '4'])
 
-    archipelago.clearPeers(['4'])
+    archipelago.onPeersRemoved(['4'])
 
     expectIslandsWith(archipelago, ['1', '2'], ['3'])
   })
@@ -119,22 +119,12 @@ describe('archipelago', () => {
 
     expectIslandsWith(archipelago, ['1', '2'])
 
-    archipelago.clearPeers(['1'])
-    archipelago.clearPeers(['2'])
+    archipelago.onPeersRemoved(['1'])
+    archipelago.onPeersRemoved(['2'])
 
     setPositionArrays(['1', 0, 0, 0])
 
     expectIslandsWith(archipelago, ['1'])
-  })
-
-  it('recalculates islands when options are modified', () => {
-    setPositionArrays(['1', 0, 0, 0], ['2', 16, 0, 16])
-    expectIslandWith(archipelago, '1', '2')
-
-    archipelago.modifyOptions({ joinDistance: 4, leaveDistance: 5 })
-
-    expectIslandWith(archipelago, '1')
-    expectIslandWith(archipelago, '2')
   })
 
   function expectChangedTo(updates: IslandUpdates, peerId: string, islandId: string, fromIslandId?: string) {
@@ -155,20 +145,20 @@ describe('archipelago', () => {
   }
 
   it('provides updates when setting positions', () => {
-    let updates = archipelago.setPeersPositions([{ id: '0', position: [15, 0, 0] }])
+    let updates = archipelago.onPeersPositionsUpdate([{ id: '0', position: [15, 0, 0] }])
 
     expectChangedTo(updates, '0', 'I1')
-    updates = archipelago.setPeersPositions([{ id: '1', position: [0, 0, 0] }])
+    updates = archipelago.onPeersPositionsUpdate([{ id: '1', position: [0, 0, 0] }])
     expectChangedTo(updates, '1', 'I1')
     expectNoUpdate(updates, '0')
 
-    updates = archipelago.setPeersPositions([{ id: '2', position: [100, 0, 0] }])
+    updates = archipelago.onPeersPositionsUpdate([{ id: '2', position: [100, 0, 0] }])
 
     expectChangedTo(updates, '2', 'I3')
     expectNoUpdate(updates, '1')
     expectNoUpdate(updates, '0')
 
-    updates = archipelago.setPeersPositions([{ id: '3', position: [50, 0, 0] }])
+    updates = archipelago.onPeersPositionsUpdate([{ id: '3', position: [50, 0, 0] }])
 
     expectChangedTo(updates, '2', 'I1', 'I3')
     expectChangedTo(updates, '3', 'I1')
@@ -181,7 +171,7 @@ describe('archipelago', () => {
 
     expectIslandsWith(archipelago, ['1', '2', '3'])
 
-    const updates = archipelago.clearPeers(['2'])
+    const updates = archipelago.onPeersRemoved(['2'])
 
     expectLeft(updates, '2', 'I1')
     expectChangedTo(updates, '3', 'I4', 'I1')
@@ -226,7 +216,7 @@ describe('archipelago', () => {
     expectIslandWith(archipelago, ...firstRequests.map((it) => it.id))
     expectIslandWith(archipelago, ...peerRequests.map((it) => it.id))
 
-    archipelago.clearPeers(peerRequests.slice(0, 10).map((it) => it.id))
+    archipelago.onPeersRemoved(peerRequests.slice(0, 10).map((it) => it.id))
 
     expect.strictEqual(archipelago.getIslandsCount(), 1)
     expectIslandWith(archipelago, ...firstRequests.map((it) => it.id), ...peerRequests.slice(10, 20).map((it) => it.id))

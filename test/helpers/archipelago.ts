@@ -65,7 +65,7 @@ export function setMultiplePeersAround(
     requests.push({ id: idGenerator.generateId(), position: randomizer.generatePositionAround(position, offset) })
   }
 
-  archipelago.setPeersPositions(requests)
+  archipelago.onPeersPositionsUpdate(requests)
 
   return requests
 }
@@ -79,7 +79,7 @@ export function configureLibs(closure: BaseClosure) {
   // (move ...[peer x y z])
   closure.defJsFunction('move', (...args: [string, number, number, number][]) => {
     const archipelago = closure.get('archipelago') as Archipelago
-    archipelago.setPeersPositions(args.map(([id, ...position]) => ({ id, position })))
+    archipelago.onPeersPositionsUpdate(args.map(([id, ...position]) => ({ id, position })))
   })
 
   // (getIslands archipelago?)
@@ -117,9 +117,9 @@ export function configureLibs(closure: BaseClosure) {
   closure.defJsFunction('disconnect', (ids, arch) => {
     const archipelago = (arch || closure.get('archipelago')) as Archipelago
     if (typeof ids == 'string') {
-      assert(archipelago.clearPeers([ids])[ids].action === 'leave', `Peer ${ids} must be deleted`)
+      assert(archipelago.onPeersRemoved([ids])[ids].action === 'leave', `Peer ${ids} must be deleted`)
     } else if (Array.isArray(ids)) {
-      const updates = archipelago.clearPeers(ids)
+      const updates = archipelago.onPeersRemoved(ids)
       ids.forEach(($: any) => assert(updates[$].action === 'leave', `Peer ${$} must be deleted`))
     } else throw new Error('Invalid argument')
   })

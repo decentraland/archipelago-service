@@ -25,17 +25,15 @@ let status: 'idle' | 'working' = 'idle'
 process.on('message', (message: WorkerRequest) => {
   switch (message.type) {
     case 'apply-updates':
-      const { clearUpdates, positionUpdates } = message.updates
+      const { clearUpdates, positionUpdates, transports } = message.updates
       performArchipelagoOperation(
         (archipelago) => ({
-          ...archipelago.clearPeers(clearUpdates),
-          ...archipelago.setPeersPositions(positionUpdates)
+          ...archipelago.onPeersRemoved(clearUpdates),
+          ...archipelago.onPeersPositionsUpdate(positionUpdates),
+          ...archipelago.onTransportsUpdate(transports)
         }),
         'updates'
       )
-      break
-    case 'apply-options-update':
-      performArchipelagoOperation((archipelago) => archipelago.modifyOptions(message.updates), 'options update')
       break
     case 'get-islands': {
       const response: IslandsResponse = {

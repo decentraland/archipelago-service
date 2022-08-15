@@ -3,7 +3,7 @@ import { AppComponents, WorkerControllerComponent, PeerPositionChange } from '..
 import { HeartbeatMessage } from './proto/archipelago'
 
 type Components = Pick<AppComponents, 'nats' | 'logs' | 'config'> & {
-  workerController: Pick<WorkerControllerComponent, 'clearPeers' | 'setPeersPositions'>
+  workerController: Pick<WorkerControllerComponent, 'onPeersRemoved' | 'onPeerPositionsUpdate'>
 }
 
 export async function setupListener({ nats, workerController, config, logs }: Components) {
@@ -21,7 +21,7 @@ export async function setupListener({ nats, workerController, config, logs }: Co
       .map(([peerId, _]) => peerId)
 
     inactivePeers.forEach((peerId) => lastPeerHeartbeats.delete(peerId))
-    workerController.clearPeers(...inactivePeers)
+    workerController.onPeersRemoved(...inactivePeers)
   }, checkHeartbeatInterval)
 
   const connectSubscription = nats.subscribe('peer.*.connect')
@@ -29,7 +29,7 @@ export async function setupListener({ nats, workerController, config, logs }: Co
     for await (const message of connectSubscription.generator) {
       try {
         const id = message.subject.split('.')[1]
-        workerController.clearPeers(id)
+        workerController.onPeersRemoved(id)
       } catch (err: any) {
         logger.error(`cannot process peer_connect message ${err.message}`)
       }
@@ -41,7 +41,7 @@ export async function setupListener({ nats, workerController, config, logs }: Co
     for await (const message of disconnectSubscription.generator) {
       try {
         const id = message.subject.split('.')[1]
-        workerController.clearPeers(id)
+        workerController.onPeersRemoved(id)
       } catch (err: any) {
         logger.error(`cannot process peer_disconnect message ${err.message}`)
       }
@@ -62,7 +62,7 @@ export async function setupListener({ nats, workerController, config, logs }: Co
         }
 
         lastPeerHeartbeats.set(peerPositionChange.id, Date.now())
-        workerController.setPeersPositions(peerPositionChange)
+        workerController.onPeerPositionsUpdate(peerPositionChange)
       } catch (err: any) {
         logger.error(`cannot process heartbeat message ${err.message}`)
       }

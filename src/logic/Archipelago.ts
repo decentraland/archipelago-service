@@ -7,18 +7,20 @@ import {
   PeerPositionChange,
   Island,
   ArchipelagoParameters,
-  UpdatableArchipelagoParameters
+  Transport
 } from '../types'
 import { findMax, popMax } from '../misc/utils'
 
 export interface IArchipelago {
   getIslandsCount(): number
-  clearPeers(ids: string[]): IslandUpdates
+  getPeerData(id: string): PeerData | undefined
+
   getIsland(id: string): Island | undefined
   getIslands(): Island[]
-  getPeerData(id: string): PeerData | undefined
-  setPeersPositions(requests: PeerPositionChange[]): IslandUpdates
-  modifyOptions(options: UpdatableArchipelagoParameters): IslandUpdates
+
+  onPeersRemoved(ids: string[]): IslandUpdates
+  onPeersPositionsUpdate(requests: PeerPositionChange[]): IslandUpdates
+  onTransportsUpdate(transports: Transport[]): IslandUpdates
 }
 
 const X_AXIS = 0
@@ -66,6 +68,7 @@ type InternalIsland = Island & {
 }
 
 export class Archipelago implements IArchipelago {
+  private transports: Transport[] = []
   private peers: Map<string, PeerData> = new Map()
   private islands: Map<string, InternalIsland> = new Map()
 
@@ -73,33 +76,14 @@ export class Archipelago implements IArchipelago {
 
   private currentSequence: number = 0
 
-  private generateId(): string {
-    return this.options.islandIdGenerator.generateId()
-  }
-
   constructor(options: ArchipelagoParameters) {
     this.options = { ...defaultOptions(), ...options }
-  }
-
-  modifyOptions(options: UpdatableArchipelagoParameters): IslandUpdates {
-    this.options = { ...this.options, ...options }
-
-    const updates: IslandUpdates = {}
-    const allIslands = new Set(this.islands.keys())
-
-    this.updateIslands(updates, allIslands)
-
-    return updates
-  }
-
-  getOptions() {
-    return this.options
   }
 
   /**
    * This returns a map containing the peers that left or changed island as keys, how they changed as values
    * */
-  setPeersPositions(changes: PeerPositionChange[]): IslandUpdates {
+  onPeersPositionsUpdate(changes: PeerPositionChange[]): IslandUpdates {
     const updates: IslandUpdates = {}
     const affectedIslands: Set<string> = new Set()
     for (const change of changes) {
@@ -128,7 +112,12 @@ export class Archipelago implements IArchipelago {
     return this.updateIslands(updates, affectedIslands)
   }
 
-  clearPeers(ids: string[]): IslandUpdates {
+  onTransportsUpdate(transports: Transport[]): IslandUpdates {
+    this.transports = transports
+    return {}
+  }
+
+  onPeersRemoved(ids: string[]): IslandUpdates {
     const updates: IslandUpdates = {}
     const affectedIslands: Set<string> = new Set()
     for (const id of ids) {
@@ -149,10 +138,6 @@ export class Archipelago implements IArchipelago {
     }
 
     return this.updateIslands(updates, affectedIslands)
-  }
-
-  getPeerData(id: string): PeerData | undefined {
-    return this.peers.get(id)
   }
 
   private clearPeerFromIsland(id: string, island: InternalIsland) {
@@ -342,7 +327,7 @@ export class Archipelago implements IArchipelago {
   }
 
   private createIsland(group: PeerData[], updates: IslandUpdates, affectedIslands: Set<string>): IslandUpdates {
-    const newIslandId = this.generateId()
+    const newIslandId = this.options.islandIdGenerator.generateId()
 
     const island: InternalIsland = {
       id: newIslandId,
@@ -385,15 +370,19 @@ export class Archipelago implements IArchipelago {
     return updates
   }
 
+  getPeerData(id: string): PeerData | undefined {
+    return this.peers.get(id)
+  }
+
+  getIslandsCount(): number {
+    return this.islands.size
+  }
+
   getIslands(): InternalIsland[] {
     return [...this.islands.values()]
   }
 
   getIsland(id: string): InternalIsland | undefined {
     return this.islands.get(id)
-  }
-
-  getIslandsCount(): number {
-    return this.islands.size
   }
 }

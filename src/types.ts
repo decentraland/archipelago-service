@@ -41,9 +41,14 @@ export type MandatoryArchipelagoOptions = Pick<ArchipelagoOptions, 'joinDistance
 
 export type ArchipelagoParameters = MandatoryArchipelagoOptions & Partial<ArchipelagoOptions>
 
-export type UpdatableArchipelagoParameters = Partial<Omit<ArchipelagoOptions, 'islandIdGenerator'>>
-
 export type PeerPositionChange = { id: string; position: Position3D; preferedIslandId?: string }
+
+export type Transport = {
+  id: number
+  availableSeats: number
+  usersCount: number
+  maxIslandSize: number
+}
 
 export type ChangeToIslandUpdate = {
   action: 'changeTo'
@@ -61,8 +66,9 @@ export type IslandUpdates = Record<string, ChangeToIslandUpdate | LeaveIslandUpd
 export type UpdateSubscriber = (updates: IslandUpdates) => any
 
 export type WorkerControllerComponent = {
-  clearPeers(...ids: string[]): void
-  setPeersPositions(...requests: PeerPositionChange[]): void
+  onPeersRemoved(...ids: string[]): void
+  onPeerPositionsUpdate(...requests: PeerPositionChange[]): void
+  setTransports(transports: Transport[]): void
   subscribeToUpdates(subscriber: UpdateSubscriber): void
   getIslands(): Promise<Island[]>
   getIsland(id: string): Promise<Island | undefined>

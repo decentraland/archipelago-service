@@ -1,26 +1,21 @@
-import { PeerPositionChange, Island, IslandUpdates, UpdatableArchipelagoParameters } from './types'
+import { PeerPositionChange, Island, IslandUpdates, Transport } from './types'
 
 // requests
-type Request = { requestId: string }
-
 export type ApplyUpdates = {
   type: 'apply-updates'
-  updates: { positionUpdates: PeerPositionChange[]; clearUpdates: string[] }
-}
-
-export type ApplyOptionsUpdate = {
-  type: 'apply-options-update'
-  updates: UpdatableArchipelagoParameters
+  updates: { positionUpdates: PeerPositionChange[]; clearUpdates: string[]; transports: Transport[] }
 }
 
 export type GetIslands = {
+  requestId: string
   type: 'get-islands'
-} & Request
+}
 
 export type GetIsland = {
+  requestId: string
   type: 'get-island'
   islandId: string
-} & Request
+}
 
 export type IslandsUpdated = {
   type: 'islands-updated'
@@ -28,26 +23,24 @@ export type IslandsUpdated = {
 }
 
 export type DisposeRequest = {
-  type: 'dispose-request'
-} & Request
-
-export type WorkerRequest = GetIslands | GetIsland | DisposeRequest | ApplyUpdates | ApplyOptionsUpdate
-
-// Responses
-type Response = {
   requestId: string
-  payload: any
+  type: 'dispose-request'
 }
 
+export type WorkerRequest = GetIslands | GetIsland | DisposeRequest | ApplyUpdates
+
+// Responses
 export type IslandsResponse = {
+  requestId: string
   type: 'islands-response'
   payload: Island[]
-} & Response
+}
 
 export type IslandResponse = {
+  requestId: string
   type: 'island-response'
   payload: Island | undefined
-} & Response
+}
 
 export type WorkerStatusMessage = {
   type: 'worker-status'
@@ -61,9 +54,10 @@ export type WorkerRequestError = {
 }
 
 export type DisposeResponse = {
-  type: 'dispose-response'
   requestId: string
-} & Response
+  type: 'dispose-response'
+  payload: any
+}
 
 export type WorkerStatus = 'working' | 'idle' | 'unknown'
 
