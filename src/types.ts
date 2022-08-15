@@ -53,7 +53,7 @@ export type Transport = {
 export type ChangeToIslandUpdate = {
   action: 'changeTo'
   islandId: string
-  connStr: string
+  transportId: number
   fromIslandId?: string
 }
 

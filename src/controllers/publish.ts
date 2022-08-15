@@ -1,11 +1,15 @@
+import { ITransportRegistryComponent } from '../ports/transport-registry'
 import { AppComponents, WorkerControllerComponent, IslandUpdates, PeerData } from '../types'
 import { IslandChangedMessage, JoinIslandMessage, LeftIslandMessage } from './proto/archipelago'
 
-type Components = Pick<AppComponents, 'nats'> & {
+type Components = Pick<AppComponents, 'nats' | 'logs'> & {
   workerController: Pick<WorkerControllerComponent, 'subscribeToUpdates' | 'getIsland'>
+  transportRegistry: Pick<ITransportRegistryComponent, 'getConnectionString'>
 }
 
-export async function setupPublishing({ nats, workerController }: Components) {
+export async function setupPublishing({ nats, logs, workerController, transportRegistry }: Components) {
+  const logger = logs.getLogger('publishing controller')
+
   workerController.subscribeToUpdates(async (updates: IslandUpdates) => {
     // Prevent processing updates if there are no changes
     if (!Object.keys(updates).length) {
@@ -20,9 +24,17 @@ export async function setupPublishing({ nats, workerController }: Components) {
           return
         }
 
+        const connStr = await transportRegistry.getConnectionString(update.transportId, peerId, update.islandId)
+
+        if (!connStr) {
+          // TODO(hugo): this a big problem, there is an inconsistency between the state archipelago has (the worker) and the reality
+          logger.error('Unhandled error: cannot get connection string for transport ${update.transportId}')
+          return
+        }
+
         const islandChangedMessage: IslandChangedMessage = {
           islandId: update.islandId,
-          connStr: update.connStr,
+          connStr: connStr,
           peers: {}
         }
 

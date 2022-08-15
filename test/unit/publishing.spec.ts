@@ -1,3 +1,4 @@
+import { createLogComponent } from '@well-known-components/logger'
 import { createLocalNatsComponent } from '@well-known-components/nats-component'
 import { IslandChangedMessage, JoinIslandMessage, LeftIslandMessage } from '../../src/controllers/proto/archipelago'
 import { setupPublishing } from '../../src/controllers/publish'
@@ -6,6 +7,13 @@ import { Island, UpdateSubscriber } from '../../src/types'
 describe('publishing', () => {
   it('should publish island changed messages', async () => {
     const nats = await createLocalNatsComponent()
+    const logs = await createLogComponent({})
+
+    const transportRegistry = {
+      async getConnectionString(transportId: number, userId: string, roomId: string): Promise<string> {
+        return `${transportId}:${userId}:${roomId}`
+      }
+    }
 
     const island: Island = {
       id: 'i1',
@@ -29,7 +37,7 @@ describe('publishing', () => {
       }
     }
 
-    await setupPublishing({ nats, workerController })
+    await setupPublishing({ nats, workerController, logs, transportRegistry })
 
     expect(registeredSubscriber).toBeTruthy()
 
@@ -40,7 +48,7 @@ describe('publishing', () => {
       peer1: {
         action: 'changeTo',
         islandId: island.id,
-        connStr: ''
+        transportId: 0
       }
     })
 
@@ -50,7 +58,7 @@ describe('publishing', () => {
         expect.objectContaining({
           fromIslandId: undefined,
           islandId: island.id,
-          connStr: '',
+          connStr: `0:peer1:${island.id}`,
           peers: {
             peer2: { x: 0, y: 0, z: 0 },
             peer3: { x: 0, y: 0, z: 0 }
@@ -69,6 +77,13 @@ describe('publishing', () => {
 
   it('should publish island island left', async () => {
     const nats = await createLocalNatsComponent()
+    const logs = await createLogComponent({})
+
+    const transportRegistry = {
+      async getConnectionString(transportId: number, userId: string, roomId: string): Promise<string> {
+        return `${transportId}:${userId}:${roomId}`
+      }
+    }
 
     let registeredSubscriber: UpdateSubscriber | undefined = undefined
     const workerController = {
@@ -80,7 +95,7 @@ describe('publishing', () => {
       }
     }
 
-    await setupPublishing({ nats, workerController })
+    await setupPublishing({ nats, workerController, logs, transportRegistry })
 
     expect(registeredSubscriber).toBeTruthy()
 

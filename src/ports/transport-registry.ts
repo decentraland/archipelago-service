@@ -22,7 +22,7 @@ type PendingAuthRequest = {
 
 export type ITransportRegistryComponent = IBaseComponent & {
   onTransportConnection(ws: WebSocket): void
-  getAvailableTransports(): Promise<Transport[]>
+  getConnectionString(id: number, userId: string, roomId: string): Promise<undefined | string>
 }
 
 export async function createTransportRegistryComponent(
@@ -34,6 +34,14 @@ export async function createTransportRegistryComponent(
   let count = 0
 
   const availableTransports = new Map<number, Transport>()
+  availableTransports.set(0, {
+    availableSeats: -1,
+    usersCount: -1,
+    maxIslandSize: 50,
+    getConnectionString(userId: string, roomId: string): Promise<string> {
+      return Promise.resolve(`p2p:${roomId}.${userId}`)
+    }
+  })
 
   function onTransportConnection(ws: WebSocket) {
     count++
@@ -125,18 +133,11 @@ export async function createTransportRegistryComponent(
     })
   }
 
-  async function getAvailableTransports(): Promise<Transport[]> {
-    const result: Transport[] = []
-    for (const transport of availableTransports.values()) {
-      if (transport.availableSeats > 0) {
-        result.push(transport)
-      }
-    }
-    return result
+  async function getConnectionString(id: number, userId: string, roomId: string): Promise<undefined | string> {
+    return undefined
   }
-
   return {
     onTransportConnection,
-    getAvailableTransports
+    getConnectionString
   }
 }

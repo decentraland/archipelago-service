@@ -227,10 +227,9 @@ export class Archipelago implements IArchipelago {
     }
 
     if (canMerge(islandToMergeInto, anIsland)) {
-      updates = this.addPeersToIsland(islandToMergeInto, anIsland.peers, updates)
-
+      islandToMergeInto.peers.push(...anIsland.peers)
+      updates = this.setPeersIsland(islandToMergeInto.id, anIsland.peers, updates)
       this.islands.delete(anIsland.id)
-
       this.markGeometryDirty(islandToMergeInto)
 
       return true
@@ -316,12 +315,6 @@ export class Archipelago implements IArchipelago {
     return squaredDistance(aPeer.position, otherPeer.position) <= squared(intersectDistance)
   }
 
-  private addPeersToIsland(island: InternalIsland, peers: PeerData[], updates: IslandUpdates): IslandUpdates {
-    island.peers.push(...peers)
-    this.markGeometryDirty(island)
-    return this.setPeersIsland(island.id, peers, updates)
-  }
-
   private markGeometryDirty(island: InternalIsland) {
     island._geometryDirty = true
   }
@@ -363,8 +356,7 @@ export class Archipelago implements IArchipelago {
     for (const peer of peers) {
       const previousIslandId = peer.islandId
       peer.islandId = islandId
-      const connStr = `p2p:${peer.islandId}.${peer.id}`
-      updates[peer.id] = { action: 'changeTo', islandId, fromIslandId: previousIslandId, connStr }
+      updates[peer.id] = { action: 'changeTo', islandId, fromIslandId: previousIslandId, transportId: 0 }
     }
 
     return updates

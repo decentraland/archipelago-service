@@ -29,7 +29,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  const { nats, config, logs, workerController } = components
+  const { nats, config, logs, workerController, transportRegistry } = components
 
   const start = async (s: Promise<Startable>) => {
     const { start } = await s
@@ -37,7 +37,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   }
 
   await setupListener({ nats, workerController, config, logs })
-  await setupPublishing({ nats, workerController })
+  await setupPublishing({ nats, workerController, transportRegistry, logs })
   await start(setupServiceDiscovery({ nats, logs, config }))
   await start(setupIslandsStatusReporting({ nats, logs, config, workerController }))
 }
