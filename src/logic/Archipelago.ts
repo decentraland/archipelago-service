@@ -344,7 +344,7 @@ export class Archipelago implements IArchipelago {
       }
 
       const reserved = reservedSeatsPerTransport.get(island.transportId) || 0
-      reservedSeatsPerTransport.set(island.transportId, reserved + island.maxPeers)
+      reservedSeatsPerTransport.set(island.transportId, reserved + (island.maxPeers - island.peers.length))
     }
 
     let transportId = 0 // p2p

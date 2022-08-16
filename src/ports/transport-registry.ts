@@ -10,6 +10,7 @@ export type Transport = {
   availableSeats: number
   usersCount: number
   maxIslandSize: number
+  lastHeartbeat: number
   getConnectionString(userId: string, roomId: string): Promise<string>
 }
 
@@ -38,6 +39,7 @@ export async function createTransportRegistryComponent(
     availableSeats: -1,
     usersCount: -1,
     maxIslandSize: 50,
+    lastHeartbeat: 0,
     getConnectionString(userId: string, roomId: string): Promise<string> {
       return Promise.resolve(`p2p:${roomId}.${userId}`)
     }
@@ -54,6 +56,7 @@ export async function createTransportRegistryComponent(
       availableSeats: 0,
       usersCount: 0,
       maxIslandSize: 0,
+      lastHeartbeat: 0,
       getConnectionString(userId: string, roomId: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
           ws.send(
@@ -82,7 +85,6 @@ export async function createTransportRegistryComponent(
         })
       }
     }
-
     ws.on('message', (message) => {
       const transportMessage = TransportMessage.decode(Reader.create(message as Buffer))
 
@@ -103,6 +105,7 @@ export async function createTransportRegistryComponent(
 
           transport.availableSeats = availableSeats
           transport.usersCount = usersCount
+          transport.lastHeartbeat = Date.now()
           break
         }
         case 'authResponse': {
@@ -124,17 +127,37 @@ export async function createTransportRegistryComponent(
       }
     })
 
+    let isAlive = true
+    ws.on('pong', () => {
+      isAlive = true
+    })
+
+    const pingInterval = setInterval(function ping() {
+      if (isAlive === false) {
+        logger.warn(`Terminating ws because of ping timeout`)
+        return ws.terminate()
+      }
+
+      isAlive = false
+      ws.ping()
+    }, 30000)
+
     ws.on('error', (error) => {
       logger.error(error)
     })
 
     ws.on('close', () => {
       logger.info('Websocket closed')
+      clearInterval(pingInterval)
     })
   }
 
   async function getConnectionString(id: number, userId: string, roomId: string): Promise<undefined | string> {
-    return undefined
+    const transport = availableTransports.get(id)
+    if (!transport) {
+      return undefined
+    }
+    return transport.getConnectionString(userId, roomId)
   }
   return {
     onTransportConnection,
