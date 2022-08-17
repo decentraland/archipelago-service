@@ -27,9 +27,9 @@ export type ITransportRegistryComponent = IBaseComponent & {
 }
 
 export async function createTransportRegistryComponent(
-  components: Pick<BaseComponents, 'logs' | 'workerController'>
+  components: Pick<BaseComponents, 'logs' | 'archipelago'>
 ): Promise<ITransportRegistryComponent> {
-  const { logs, workerController } = components
+  const { logs, archipelago } = components
   const logger = logs.getLogger('Transport Registry')
 
   let count = 0
@@ -170,7 +170,7 @@ export async function createTransportRegistryComponent(
         maxIslandSize
       })
     }
-    workerController.setTransports(transports)
+    archipelago.setTransports(transports)
   }, 1000)
 
   return {

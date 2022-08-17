@@ -1,19 +1,14 @@
-import { WorkerController } from '../../src/controllers/worker-controller'
-import { Transport, ArchipelagoOptions, Island, PeerPositionChange, Position3D } from '../../src/types'
-import { Archipelago } from '../../src/logic/Archipelago'
+import { Island, PeerPositionChange, Position3D } from '../../src/types'
+import { ArchipelagoController } from '../../src/controllers/archipelago'
 import { BaseClosure, evaluate } from 'tiny-clojure'
 import { NodeError } from 'tiny-clojure/dist/types'
 import assert from 'assert'
 import get from 'lodash.get'
 import { createRandomizer } from '../helpers/random'
 import { IdGenerator, sequentialIdGenerator } from '../../src/misc/idGenerator'
+import { createLogComponent } from '@well-known-components/logger'
 
-export const defaultArchipelagoOptions = {
-  joinDistance: 64,
-  leaveDistance: 80
-}
-
-export function expectIslandWith(archipelago: Archipelago, ...ids: string[]) {
+export function expectIslandWith(archipelago: ArchipelagoController, ...ids: string[]) {
   assert(Array.isArray(ids))
   assert('getIslands' in archipelago)
   const islands = archipelago.getIslands()
@@ -33,27 +28,27 @@ function expectIslandWithPeerIdsIn(ids: string[], islands: Island[]) {
   }
 }
 
-export function expectIslandsWith(archipelago: Archipelago, ...islandIds: string[][]) {
+export function expectIslandsWith(archipelago: ArchipelagoController, ...islandIds: string[][]) {
   assert('getIslands' in archipelago)
   assert(Array.isArray(islandIds))
   islandIds.forEach((ids) => expectIslandWith(archipelago, ...ids))
   assert.strictEqual(archipelago.getIslands().length, islandIds.length)
 }
 
-export async function expectIslandInControllerWith(archipelago: WorkerController, ...peerIds: string[]) {
-  expectIslandWithPeerIdsIn(peerIds, await archipelago.getIslands())
+export async function expectIslandInControllerWith(archipelago: ArchipelagoController, ...peerIds: string[]) {
+  expectIslandWithPeerIdsIn(peerIds, archipelago.getIslands())
 }
 
-export async function expectIslandsInControllerWith(archipelago: WorkerController, ...peerGroups: string[][]) {
+export async function expectIslandsInControllerWith(archipelago: ArchipelagoController, ...peerGroups: string[][]) {
   await Promise.all(peerGroups.map((ids) => expectIslandInControllerWith(archipelago, ...ids)))
 }
 
-export function expectIslandsCount(archipelago: Archipelago, count: number) {
+export function expectIslandsCount(archipelago: ArchipelagoController, count: number) {
   assert.strictEqual(archipelago.getIslands().length, count)
 }
 
 export function setMultiplePeersAround(
-  archipelago: Archipelago,
+  archipelago: ArchipelagoController,
   position: Position3D,
   qty: number,
   idGenerator: IdGenerator = sequentialIdGenerator('P'),
@@ -65,16 +60,23 @@ export function setMultiplePeersAround(
     requests.push({ id: idGenerator.generateId(), position: randomizer.generatePositionAround(position, offset) })
   }
 
-  archipelago.onPeersPositionsUpdate(requests)
+  archipelago.onPeerPositionsUpdate(requests)
+  archipelago.flush()
 
   return requests
 }
 
 export function configureLibs(closure: BaseClosure) {
   // (configure { options })
-  closure.defJsFunction('configure', (options?: ArchipelagoOptions) => {
-    const archipelago = new Archipelago(options ?? defaultArchipelagoOptions)
-    archipelago.onTransportsUpdate([
+  closure.defJsFunction('configure', async () => {
+    const archipelago = new ArchipelagoController({
+      logs: await createLogComponent({}),
+      parameters: {
+        joinDistance: 64,
+        leaveDistance: 80
+      }
+    })
+    archipelago.setTransports([
       {
         id: 0,
         availableSeats: -1,
@@ -86,53 +88,55 @@ export function configureLibs(closure: BaseClosure) {
   })
 
   closure.defJsFunction('configureTransports', (args: [number, number, number, number][]) => {
-    const archipelago = closure.get('archipelago') as Archipelago
-    archipelago.onTransportsUpdate(
+    const archipelago = closure.get('archipelago') as ArchipelagoController
+    archipelago.setTransports(
       args.map(([id, availableSeats, usersCount, maxIslandSize]) => {
         return { id, availableSeats, usersCount, maxIslandSize }
       })
     )
+    archipelago.flush()
   })
 
   // (move ...[peer x y z])
   closure.defJsFunction('move', (...args: [string, number, number, number][]) => {
-    const archipelago = closure.get('archipelago') as Archipelago
-    archipelago.onPeersPositionsUpdate(args.map(([id, ...position]) => ({ id, position })))
+    const archipelago = closure.get('archipelago') as ArchipelagoController
+    archipelago.onPeerPositionsUpdate(args.map(([id, ...position]) => ({ id, position })))
+    archipelago.flush()
   })
 
   // (getIslands archipelago?)
   closure.defJsFunction('getIslands', (arch) => {
-    const archipelago = (arch || closure.get('archipelago')) as Archipelago
+    const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     return archipelago.getIslands()
   })
 
   // (getIsland id archipelago?)
   closure.defJsFunction('getIsland', (id, arch?) => {
-    const archipelago = (arch || closure.get('archipelago')) as Archipelago
+    const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     console.assert(typeof id == 'string', 'getIsland(islandId) islandId must be a string')
     return archipelago.getIsland(id)
   })
 
   // (expectIslandWith [...ids] arch?)
   closure.defJsFunction('expectIslandWith', (ids, arch) => {
-    const archipelago = (arch || closure.get('archipelago')) as Archipelago
+    const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     expectIslandWith(archipelago, ...ids)
   })
 
   // (expectIslandsWith [...ids] arch?)
   closure.defJsFunction('expectIslandsWith', (ids, arch) => {
-    const archipelago = (arch || closure.get('archipelago')) as Archipelago
+    const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     expectIslandsWith(archipelago, ...ids)
   })
 
   // (ensureIslandsCount count arch?)
   closure.defJsFunction('ensureIslandsCount', (count: number, arch) => {
-    const archipelago = (arch || closure.get('archipelago')) as Archipelago
+    const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     expectIslandsCount(archipelago, count)
   })
 
   closure.defJsFunction('ensureIslandsCountWithTransport', (expectedCount: number, transportId: number, arch) => {
-    const archipelago = (arch || closure.get('archipelago')) as Archipelago
+    const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     let count = 0
     for (const island of archipelago.getIslands()) {
       if (transportId === island.transportId) {
@@ -144,13 +148,18 @@ export function configureLibs(closure: BaseClosure) {
 
   // (disconnect [...ids] arch?)
   closure.defJsFunction('disconnect', (ids, arch) => {
-    const archipelago = (arch || closure.get('archipelago')) as Archipelago
+    const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     if (typeof ids == 'string') {
-      assert(archipelago.onPeersRemoved([ids])[ids].action === 'leave', `Peer ${ids} must be deleted`)
+      archipelago.onPeersRemoved([ids])
+      const updates = archipelago.flush()
+      assert(updates[ids].action === 'leave', `Peer ${ids} must be deleted`)
     } else if (Array.isArray(ids)) {
-      const updates = archipelago.onPeersRemoved(ids)
+      archipelago.onPeersRemoved(ids)
+      const updates = archipelago.flush()
       ids.forEach(($: any) => assert(updates[$].action === 'leave', `Peer ${$} must be deleted`))
-    } else throw new Error('Invalid argument')
+    } else {
+      throw new Error('Invalid argument')
+    }
   })
 
   // (get obj ...path)

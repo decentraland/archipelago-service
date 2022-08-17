@@ -8,7 +8,6 @@ import type {
 } from '@well-known-components/interfaces'
 import { metricDeclarations } from './metrics'
 import { INatsComponent } from '@well-known-components/nats-component/dist/types'
-import { IdGenerator } from './misc/idGenerator'
 import { ITransportRegistryComponent } from './ports/transport-registry'
 
 export type Position3D = [number, number, number]
@@ -28,17 +27,12 @@ export type Island = {
   center: Position3D
   radius: number
   sequenceId: number
+  transportId: number
+  _center?: Position3D
+  _radius?: number
+  _geometryDirty: boolean
+  _recalculateGeometryIfNeeded: () => void
 }
-
-export type ArchipelagoOptions = {
-  joinDistance: number
-  leaveDistance: number
-  islandIdGenerator: IdGenerator
-}
-
-export type MandatoryArchipelagoOptions = Pick<ArchipelagoOptions, 'joinDistance' | 'leaveDistance'>
-
-export type ArchipelagoParameters = MandatoryArchipelagoOptions & Partial<ArchipelagoOptions>
 
 export type PeerPositionChange = { id: string; position: Position3D; preferedIslandId?: string }
 
@@ -64,13 +58,13 @@ export type LeaveIslandUpdate = {
 export type IslandUpdates = Record<string, ChangeToIslandUpdate | LeaveIslandUpdate>
 export type UpdateSubscriber = (updates: IslandUpdates) => any
 
-export type WorkerControllerComponent = {
-  onPeersRemoved(...ids: string[]): void
-  onPeerPositionsUpdate(...requests: PeerPositionChange[]): void
+export type ArchipelagoComponent = {
+  onPeersRemoved(ids: string[]): void
+  onPeerPositionsUpdate(changes: PeerPositionChange[]): void
   setTransports(transports: Transport[]): void
   subscribeToUpdates(subscriber: UpdateSubscriber): void
-  getIslands(): Promise<Island[]>
-  getIsland(id: string): Promise<Island | undefined>
+  getIslands(): Island[]
+  getIsland(id: string): Island | undefined
 }
 
 export type GlobalContext = {
@@ -85,7 +79,7 @@ export type BaseComponents = {
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   nats: INatsComponent
-  workerController: WorkerControllerComponent
+  archipelago: ArchipelagoComponent
   transportRegistry: ITransportRegistryComponent
 }
 

@@ -6,28 +6,26 @@ import { createFetchComponent } from './ports/fetch'
 import { createMetricsComponent } from '@well-known-components/metrics'
 import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
-import { WorkerController } from './controllers/worker-controller'
+import { ArchipelagoController } from './controllers/archipelago'
 import { createNatsComponent } from '@well-known-components/nats-component'
 import { createTransportRegistryComponent } from './ports/transport-registry'
 import { WebSocketServer } from 'ws'
 
-export async function createWorkerControllerComponent(
+export async function createArchipelagoControllerComponent(
   config: IConfigComponent,
   logs: ILoggerComponent
-): Promise<WorkerController> {
+): Promise<ArchipelagoController> {
   const flushFrequency = await config.requireNumber('ARCHIPELAGO_FLUSH_FREQUENCY')
   const joinDistance = await config.requireNumber('ARCHIPELAGO_JOIN_DISTANCE')
   const leaveDistance = await config.requireNumber('ARCHIPELAGO_LEAVE_DISTANCE')
-  const workerSrcPath = await config.getString('ARCHIPELAGO_WORKER_SRC_PATH')
 
-  const controller = new WorkerController({
+  const controller = new ArchipelagoController({
+    logs,
     flushFrequency,
-    archipelagoParameters: {
+    parameters: {
       joinDistance,
       leaveDistance
-    },
-    workerSrcPath,
-    components: { logs }
+    }
   })
 
   return controller
@@ -45,8 +43,8 @@ export async function initComponents(): Promise<AppComponents> {
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const nats = await createNatsComponent({ config, logs })
-  const workerController = await createWorkerControllerComponent(config, logs)
-  const transportRegistry = await createTransportRegistryComponent({ logs, workerController })
+  const archipelago = await createArchipelagoControllerComponent(config, logs)
+  const transportRegistry = await createTransportRegistryComponent({ logs, archipelago })
 
   return {
     config,
@@ -56,7 +54,7 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     nats,
-    workerController,
+    archipelago,
     transportRegistry
   }
 }

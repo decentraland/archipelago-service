@@ -1,21 +1,25 @@
-import { Archipelago } from '../../src/logic/Archipelago'
+import { ArchipelagoController } from '../../src/controllers/archipelago'
 
 import expect from 'assert'
 import { PeerPositionChange, IslandUpdates, ChangeToIslandUpdate } from '../../src/types'
 import { sequentialIdGenerator } from '../../src/misc/idGenerator'
 import { expectIslandsWith, expectIslandWith, setMultiplePeersAround } from '../helpers/archipelago'
+import { createLogComponent } from '@well-known-components/logger'
 
 type PositionWithId = [string, number, number, number]
 
 describe('archipelago', () => {
-  let archipelago: Archipelago
-  beforeEach(() => {
-    archipelago = new Archipelago({
-      joinDistance: 64,
-      leaveDistance: 80
+  let archipelago: ArchipelagoController
+  beforeEach(async () => {
+    archipelago = new ArchipelagoController({
+      logs: await createLogComponent({}),
+      parameters: {
+        joinDistance: 64,
+        leaveDistance: 80
+      }
     })
 
-    archipelago.onTransportsUpdate([
+    archipelago.setTransports([
       {
         id: 0,
         availableSeats: -1,
@@ -26,11 +30,8 @@ describe('archipelago', () => {
   })
 
   function setPositionArrays(...positions: PositionWithId[]) {
-    return setPositions(...positions.map(([id, ...position]) => ({ id, position })))
-  }
-
-  function setPositions(...positions: PeerPositionChange[]) {
-    return archipelago.onPeersPositionsUpdate(positions)
+    archipelago.onPeerPositionsUpdate(positions.map(([id, ...position]) => ({ id, position })))
+    return archipelago.flush()
   }
 
   it('joins two close peers in island', () => {
@@ -119,6 +120,7 @@ describe('archipelago', () => {
     expectIslandsWith(archipelago, ['1', '2', '3', '4'])
 
     archipelago.onPeersRemoved(['4'])
+    archipelago.flush()
 
     expectIslandsWith(archipelago, ['1', '2'], ['3'])
   })
@@ -130,6 +132,7 @@ describe('archipelago', () => {
 
     archipelago.onPeersRemoved(['1'])
     archipelago.onPeersRemoved(['2'])
+    archipelago.flush()
 
     setPositionArrays(['1', 0, 0, 0])
 
@@ -154,20 +157,24 @@ describe('archipelago', () => {
   }
 
   it('provides updates when setting positions', () => {
-    let updates = archipelago.onPeersPositionsUpdate([{ id: '0', position: [15, 0, 0] }])
+    archipelago.onPeerPositionsUpdate([{ id: '0', position: [15, 0, 0] }])
+    let updates = archipelago.flush()
 
     expectChangedTo(updates, '0', 'I1')
-    updates = archipelago.onPeersPositionsUpdate([{ id: '1', position: [0, 0, 0] }])
+    archipelago.onPeerPositionsUpdate([{ id: '1', position: [0, 0, 0] }])
+    updates = archipelago.flush()
     expectChangedTo(updates, '1', 'I1')
     expectNoUpdate(updates, '0')
 
-    updates = archipelago.onPeersPositionsUpdate([{ id: '2', position: [100, 0, 0] }])
+    archipelago.onPeerPositionsUpdate([{ id: '2', position: [100, 0, 0] }])
+    updates = archipelago.flush()
 
     expectChangedTo(updates, '2', 'I3')
     expectNoUpdate(updates, '1')
     expectNoUpdate(updates, '0')
 
-    updates = archipelago.onPeersPositionsUpdate([{ id: '3', position: [50, 0, 0] }])
+    archipelago.onPeerPositionsUpdate([{ id: '3', position: [50, 0, 0] }])
+    updates = archipelago.flush()
 
     expectChangedTo(updates, '2', 'I1', 'I3')
     expectChangedTo(updates, '3', 'I1')
@@ -179,8 +186,9 @@ describe('archipelago', () => {
     setPositionArrays(['1', 0, 0, 0], ['2', 50, 0, 0], ['3', 100, 0, 0])
 
     expectIslandsWith(archipelago, ['1', '2', '3'])
+    archipelago.onPeersRemoved(['2'])
 
-    const updates = archipelago.onPeersRemoved(['2'])
+    const updates = archipelago.flush()
 
     expectLeft(updates, '2', 'I1')
     expectChangedTo(updates, '3', 'I4', 'I1')
@@ -209,25 +217,26 @@ describe('archipelago', () => {
     const idGenerator = sequentialIdGenerator('P')
     const firstRequests = setMultiplePeersAround(archipelago, [0, 0, 0], 190, idGenerator)
 
-    expect.strictEqual(archipelago.getIslandsCount(), 1)
+    expect.strictEqual(archipelago.getIslands().length, 1)
     expectIslandWith(archipelago, ...firstRequests.map((it) => it.id))
 
     const peerRequests = setMultiplePeersAround(archipelago, [100, 0, 0], 20, idGenerator)
 
-    expect.strictEqual(archipelago.getIslandsCount(), 2)
+    expect.strictEqual(archipelago.getIslands().length, 2)
     expectIslandWith(archipelago, ...peerRequests.map((it) => it.id))
 
     setPositionArrays(
       ...peerRequests.map((it) => [it.id, it.position[0] - 100, it.position[1], it.position[2]] as PositionWithId)
     )
 
-    expect.strictEqual(archipelago.getIslandsCount(), 2)
+    expect.strictEqual(archipelago.getIslands().length, 2)
     expectIslandWith(archipelago, ...firstRequests.map((it) => it.id))
     expectIslandWith(archipelago, ...peerRequests.map((it) => it.id))
 
     archipelago.onPeersRemoved(peerRequests.slice(0, 10).map((it) => it.id))
+    archipelago.flush()
 
-    expect.strictEqual(archipelago.getIslandsCount(), 1)
+    expect.strictEqual(archipelago.getIslands().length, 1)
     expectIslandWith(archipelago, ...firstRequests.map((it) => it.id), ...peerRequests.slice(10, 20).map((it) => it.id))
   })
 
@@ -245,10 +254,10 @@ describe('archipelago', () => {
       ...smallIsland.map((it) => [it.id, it.position[0] - 200, it.position[1], it.position[2]] as PositionWithId)
     )
 
-    expect.strictEqual(archipelago.getIslandsCount(), 3)
+    expect.strictEqual(archipelago.getIslands().length, 3)
 
     setPositionArrays(['newPeer', 0, 0, 0])
-    expect.strictEqual(archipelago.getIslandsCount(), 3)
+    expect.strictEqual(archipelago.getIslands().length, 3)
 
     expectIslandWith(archipelago, 'newPeer', ...superBigIsland.map((it) => it.id))
 
@@ -285,15 +294,20 @@ describe('archipelago', () => {
       ...smallIsland.map((it) => [it.id, it.position[0] - 200, it.position[1], it.position[2]] as PositionWithId)
     )
 
-    let updates = setPositions({ id: 'peer1', position: [0, 0, 0] })
+    archipelago.onPeerPositionsUpdate([{ id: 'peer1', position: [0, 0, 0] }])
+    let updates = archipelago.flush()
 
     expectChangedTo(updates, 'peer1', getIslandId(superBigIsland))
 
-    updates = setPositions({ id: 'peer2', position: [0, 0, 0], preferedIslandId: getIslandId(bigIsland) })
+    archipelago.onPeerPositionsUpdate([{ id: 'peer2', position: [0, 0, 0], preferedIslandId: getIslandId(bigIsland) }])
+    updates = archipelago.flush()
 
     expectChangedTo(updates, 'peer2', getIslandId(bigIsland))
 
-    updates = setPositions({ id: 'peer3', position: [0, 0, 0], preferedIslandId: getIslandId(smallIsland) })
+    archipelago.onPeerPositionsUpdate([
+      { id: 'peer3', position: [0, 0, 0], preferedIslandId: getIslandId(smallIsland) }
+    ])
+    updates = archipelago.flush()
 
     expectChangedTo(updates, 'peer3', getIslandId(smallIsland))
   })
@@ -307,11 +321,12 @@ describe('archipelago', () => {
       ...bigIsland.map((it) => [it.id, it.position[0] - 100, it.position[1], it.position[2]] as PositionWithId)
     )
 
-    let updates = setPositions(
+    archipelago.onPeerPositionsUpdate([
       { id: 'peer1', position: [100, 0, 0], preferedIslandId: getIslandId(bigIsland) },
       { id: 'peer2', position: [100, 0, 0] }
-    )
+    ])
 
+    let updates = archipelago.flush()
     expectIslandWith(archipelago, 'peer1', 'peer2')
 
     expect.notStrictEqual(updates['peer1'].islandId, getIslandId(bigIsland))

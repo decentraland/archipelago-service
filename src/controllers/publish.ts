@@ -1,16 +1,16 @@
 import { ITransportRegistryComponent } from '../ports/transport-registry'
-import { AppComponents, WorkerControllerComponent, IslandUpdates, PeerData } from '../types'
+import { AppComponents, ArchipelagoComponent, IslandUpdates, PeerData } from '../types'
 import { IslandChangedMessage, JoinIslandMessage, LeftIslandMessage } from './proto/archipelago'
 
 type Components = Pick<AppComponents, 'nats' | 'logs'> & {
-  workerController: Pick<WorkerControllerComponent, 'subscribeToUpdates' | 'getIsland'>
+  archipelago: Pick<ArchipelagoComponent, 'subscribeToUpdates' | 'getIsland'>
   transportRegistry: Pick<ITransportRegistryComponent, 'getConnectionString'>
 }
 
-export async function setupPublishing({ nats, logs, workerController, transportRegistry }: Components) {
+export async function setupPublishing({ nats, logs, archipelago, transportRegistry }: Components) {
   const logger = logs.getLogger('publishing controller')
 
-  workerController.subscribeToUpdates(async (updates: IslandUpdates) => {
+  archipelago.subscribeToUpdates(async (updates: IslandUpdates) => {
     // Prevent processing updates if there are no changes
     if (!Object.keys(updates).length) {
       return
@@ -19,7 +19,7 @@ export async function setupPublishing({ nats, logs, workerController, transportR
     Object.keys(updates).forEach(async (peerId) => {
       const update = updates[peerId]
       if (update.action === 'changeTo') {
-        const island = await workerController.getIsland(update.islandId)
+        const island = archipelago.getIsland(update.islandId)
         if (!island) {
           return
         }

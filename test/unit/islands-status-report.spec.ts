@@ -18,16 +18,19 @@ describe('island-status-reporting', () => {
         radius: 100,
         maxPeers: 100,
         peers: [],
-        sequenceId: 10
+        sequenceId: 10,
+        transportId: 0,
+        _geometryDirty: false,
+        _recalculateGeometryIfNeeded: () => {}
       }
     ]
 
     const s = nats.subscribe('archipelago.islands')
 
-    const workerController = {
-      getIslands: () => Promise.resolve(islands)
+    const archipelago = {
+      getIslands: () => islands
     }
-    const { publishReport } = await setupIslandsStatusReporting({ nats, logs, config, workerController })
+    const { publishReport } = await setupIslandsStatusReporting({ nats, logs, config, archipelago })
     await publishReport()
 
     for await (const message of s.generator) {

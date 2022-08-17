@@ -24,20 +24,23 @@ describe('publishing', () => {
       peers: [
         { id: 'peer2', position: [0, 0, 0] },
         { id: 'peer3', position: [0, 0, 0] }
-      ]
+      ],
+      transportId: 0,
+      _geometryDirty: false,
+      _recalculateGeometryIfNeeded: () => {}
     }
 
     let registeredSubscriber: UpdateSubscriber | undefined = undefined
-    const workerController = {
+    const archipelago = {
       subscribeToUpdates(subscriber: UpdateSubscriber) {
         registeredSubscriber = subscriber
       },
-      getIsland(_: string): Promise<Island> {
-        return Promise.resolve(island)
+      getIsland(_: string): Island {
+        return island
       }
     }
 
-    await setupPublishing({ nats, workerController, logs, transportRegistry })
+    await setupPublishing({ nats, archipelago, logs, transportRegistry })
 
     expect(registeredSubscriber).toBeTruthy()
 
@@ -86,16 +89,16 @@ describe('publishing', () => {
     }
 
     let registeredSubscriber: UpdateSubscriber | undefined = undefined
-    const workerController = {
+    const archipelago = {
       subscribeToUpdates(subscriber: UpdateSubscriber) {
         registeredSubscriber = subscriber
       },
       getIsland(_: string) {
-        return Promise.resolve(undefined)
+        return undefined
       }
     }
 
-    await setupPublishing({ nats, workerController, logs, transportRegistry })
+    await setupPublishing({ nats, archipelago, logs, transportRegistry })
 
     expect(registeredSubscriber).toBeTruthy()
 
