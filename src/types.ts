@@ -58,15 +58,6 @@ export type LeaveIslandUpdate = {
 export type IslandUpdates = Record<string, ChangeToIslandUpdate | LeaveIslandUpdate>
 export type UpdateSubscriber = (updates: IslandUpdates) => any
 
-export type ArchipelagoComponent = {
-  onPeersRemoved(ids: string[]): void
-  onPeerPositionsUpdate(changes: PeerPositionChange[]): void
-  setTransports(transports: Transport[]): void
-  subscribeToUpdates(subscriber: UpdateSubscriber): void
-  getIslands(): Island[]
-  getIsland(id: string): Island | undefined
-}
-
 export type GlobalContext = {
   components: BaseComponents
 }
@@ -79,7 +70,6 @@ export type BaseComponents = {
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   nats: INatsComponent
-  archipelago: ArchipelagoComponent
   transportRegistry: ITransportRegistryComponent
 }
 

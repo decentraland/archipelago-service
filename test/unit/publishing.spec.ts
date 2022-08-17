@@ -40,7 +40,7 @@ describe('publishing', () => {
       }
     }
 
-    await setupPublishing({ nats, archipelago, logs, transportRegistry })
+    await setupPublishing(archipelago, { nats, logs, transportRegistry })
 
     expect(registeredSubscriber).toBeTruthy()
 
@@ -98,7 +98,7 @@ describe('publishing', () => {
       }
     }
 
-    await setupPublishing({ nats, archipelago, logs, transportRegistry })
+    await setupPublishing(archipelago, { nats, logs, transportRegistry })
 
     expect(registeredSubscriber).toBeTruthy()
 

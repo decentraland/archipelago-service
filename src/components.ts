@@ -1,35 +1,13 @@
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { createServerComponent, createStatusCheckComponent } from '@well-known-components/http-server'
-import { IConfigComponent, ILoggerComponent } from '@well-known-components/interfaces'
 import { createLogComponent } from '@well-known-components/logger'
 import { createFetchComponent } from './ports/fetch'
 import { createMetricsComponent } from '@well-known-components/metrics'
 import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
-import { ArchipelagoController } from './controllers/archipelago'
 import { createNatsComponent } from '@well-known-components/nats-component'
 import { createTransportRegistryComponent } from './ports/transport-registry'
 import { WebSocketServer } from 'ws'
-
-export async function createArchipelagoControllerComponent(
-  config: IConfigComponent,
-  logs: ILoggerComponent
-): Promise<ArchipelagoController> {
-  const flushFrequency = await config.requireNumber('ARCHIPELAGO_FLUSH_FREQUENCY')
-  const joinDistance = await config.requireNumber('ARCHIPELAGO_JOIN_DISTANCE')
-  const leaveDistance = await config.requireNumber('ARCHIPELAGO_LEAVE_DISTANCE')
-
-  const controller = new ArchipelagoController({
-    logs,
-    flushFrequency,
-    parameters: {
-      joinDistance,
-      leaveDistance
-    }
-  })
-
-  return controller
-}
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -43,8 +21,7 @@ export async function initComponents(): Promise<AppComponents> {
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const nats = await createNatsComponent({ config, logs })
-  const archipelago = await createArchipelagoControllerComponent(config, logs)
-  const transportRegistry = await createTransportRegistryComponent({ logs, archipelago })
+  const transportRegistry = await createTransportRegistryComponent({ logs })
 
   return {
     config,
@@ -54,7 +31,6 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     nats,
-    archipelago,
     transportRegistry
   }
 }

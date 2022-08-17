@@ -1,13 +1,13 @@
-import { AppComponents, ArchipelagoComponent } from '../types'
+import { ArchipelagoController } from '../controllers/archipelago'
+import { AppComponents } from '../types'
 import { IslandStatusMessage, IslandData } from './proto/archipelago'
 
 const DEFAULT_ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL = 1000 * 60 * 2 // 2 min
 
-type Components = Pick<AppComponents, 'nats' | 'logs' | 'config'> & {
-  archipelago: Pick<ArchipelagoComponent, 'getIslands'>
-}
-
-export async function setupIslandsStatusReporting({ nats, logs, config, archipelago }: Components) {
+export async function setupIslandsStatusReporting(
+  archipelago: Pick<ArchipelagoController, 'getIslands'>,
+  { nats, logs, config }: Pick<AppComponents, 'nats' | 'logs' | 'config'>
+) {
   const logger = logs.getLogger('Islands status report')
 
   const islandsStatusUpdateIntervalFreq =

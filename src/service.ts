@@ -4,6 +4,7 @@ import { setupListener } from './controllers/listener'
 import { setupPublishing } from './controllers/publish'
 import { setupRouter } from './controllers/routes'
 import { setupServiceDiscovery } from './controllers/service-discovery'
+import { ArchipelagoController } from './controllers/archipelago'
 import { AppComponents, GlobalContext, TestComponents } from './types'
 
 type Startable = {
@@ -29,15 +30,33 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  const { nats, config, logs, archipelago, transportRegistry } = components
+  const { nats, config, logs, transportRegistry } = components
 
   const start = async (s: Promise<Startable>) => {
     const { start } = await s
     await start()
   }
 
-  await setupListener({ nats, archipelago, config, logs })
-  await setupPublishing({ nats, archipelago, transportRegistry, logs })
+  const flushFrequency = await config.requireNumber('ARCHIPELAGO_FLUSH_FREQUENCY')
+  const joinDistance = await config.requireNumber('ARCHIPELAGO_JOIN_DISTANCE')
+  const leaveDistance = await config.requireNumber('ARCHIPELAGO_LEAVE_DISTANCE')
+
+  const archipelago = new ArchipelagoController({
+    logs,
+    flushFrequency,
+    parameters: {
+      joinDistance,
+      leaveDistance
+    }
+  })
+
+  setInterval(() => {
+    const transports = transportRegistry.getTransports()
+    archipelago.setTransports(transports)
+  }, 1000)
+
+  await setupListener(archipelago, { nats, config, logs })
+  await setupPublishing(archipelago, { nats, transportRegistry, logs })
   await start(setupServiceDiscovery({ nats, logs, config }))
-  await start(setupIslandsStatusReporting({ nats, logs, config, archipelago }))
+  await start(setupIslandsStatusReporting(archipelago, { nats, logs, config }))
 }

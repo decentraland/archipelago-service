@@ -30,7 +30,7 @@ describe('island-status-reporting', () => {
     const archipelago = {
       getIslands: () => islands
     }
-    const { publishReport } = await setupIslandsStatusReporting({ nats, logs, config, archipelago })
+    const { publishReport } = await setupIslandsStatusReporting(archipelago, { nats, logs, config })
     await publishReport()
 
     for await (const message of s.generator) {

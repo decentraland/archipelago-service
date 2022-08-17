@@ -1,13 +1,16 @@
 import { ITransportRegistryComponent } from '../ports/transport-registry'
-import { AppComponents, ArchipelagoComponent, IslandUpdates, PeerData } from '../types'
+import { AppComponents, IslandUpdates, PeerData } from '../types'
+import { ArchipelagoController } from './archipelago'
 import { IslandChangedMessage, JoinIslandMessage, LeftIslandMessage } from './proto/archipelago'
 
 type Components = Pick<AppComponents, 'nats' | 'logs'> & {
-  archipelago: Pick<ArchipelagoComponent, 'subscribeToUpdates' | 'getIsland'>
   transportRegistry: Pick<ITransportRegistryComponent, 'getConnectionString'>
 }
 
-export async function setupPublishing({ nats, logs, archipelago, transportRegistry }: Components) {
+export async function setupPublishing(
+  archipelago: Pick<ArchipelagoController, 'subscribeToUpdates' | 'getIsland'>,
+  { nats, logs, transportRegistry }: Components
+) {
   const logger = logs.getLogger('publishing controller')
 
   archipelago.subscribeToUpdates(async (updates: IslandUpdates) => {

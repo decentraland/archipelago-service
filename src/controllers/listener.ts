@@ -1,12 +1,12 @@
 import { Reader } from 'protobufjs/minimal'
-import { AppComponents, ArchipelagoComponent, PeerPositionChange } from '../types'
+import { AppComponents, PeerPositionChange } from '../types'
+import { ArchipelagoController } from './archipelago'
 import { HeartbeatMessage } from './proto/archipelago'
 
-type Components = Pick<AppComponents, 'nats' | 'logs' | 'config'> & {
-  archipelago: Pick<ArchipelagoComponent, 'onPeersRemoved' | 'onPeerPositionsUpdate'>
-}
-
-export async function setupListener({ nats, archipelago, config, logs }: Components) {
+export async function setupListener(
+  archipelago: Pick<ArchipelagoController, 'onPeersRemoved' | 'onPeerPositionsUpdate'>,
+  { nats, logs, config }: Pick<AppComponents, 'nats' | 'logs' | 'config'>
+) {
   const checkHeartbeatInterval = await config.requireNumber('CHECK_HEARTBEAT_INTERVAL')
   const logger = logs.getLogger('NATS listener')
 

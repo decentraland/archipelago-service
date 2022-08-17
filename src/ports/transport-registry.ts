@@ -1,12 +1,12 @@
 import { WebSocket } from 'ws'
 import { Reader } from 'protobufjs/minimal'
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { BaseComponents, Transport as ExportedTransport } from '../types'
+import { BaseComponents, Transport } from '../types'
 import { TransportMessage } from '../controllers/proto/archipelago'
 
 const PENDING_AUTH_TIMEOUT_MS = 400
 
-export type Transport = {
+export type RegisteredTransport = {
   availableSeats: number
   usersCount: number
   maxIslandSize: number
@@ -24,17 +24,18 @@ type PendingAuthRequest = {
 export type ITransportRegistryComponent = IBaseComponent & {
   onTransportConnection(ws: WebSocket): void
   getConnectionString(id: number, userId: string, roomId: string): Promise<undefined | string>
+  getTransports(): Transport[]
 }
 
 export async function createTransportRegistryComponent(
-  components: Pick<BaseComponents, 'logs' | 'archipelago'>
+  components: Pick<BaseComponents, 'logs'>
 ): Promise<ITransportRegistryComponent> {
-  const { logs, archipelago } = components
+  const { logs } = components
   const logger = logs.getLogger('Transport Registry')
 
   let count = 0
 
-  const availableTransports = new Map<number, Transport>()
+  const availableTransports = new Map<number, RegisteredTransport>()
   availableTransports.set(0, {
     availableSeats: -1,
     usersCount: -1,
@@ -52,7 +53,7 @@ export async function createTransportRegistryComponent(
 
     const pendingAuthRequests = new Map<string, PendingAuthRequest>()
 
-    const transport: Transport = {
+    const transport: RegisteredTransport = {
       availableSeats: 0,
       usersCount: 0,
       maxIslandSize: 0,
@@ -160,8 +161,8 @@ export async function createTransportRegistryComponent(
     return transport.getConnectionString(userId, roomId)
   }
 
-  setInterval(() => {
-    const transports: ExportedTransport[] = []
+  function getTransports(): Transport[] {
+    const transports: Transport[] = []
     for (const [id, { availableSeats, usersCount, maxIslandSize }] of availableTransports) {
       transports.push({
         id,
@@ -170,11 +171,12 @@ export async function createTransportRegistryComponent(
         maxIslandSize
       })
     }
-    archipelago.setTransports(transports)
-  }, 1000)
+    return transports
+  }
 
   return {
     onTransportConnection,
-    getConnectionString
+    getConnectionString,
+    getTransports
   }
 }
