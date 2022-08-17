@@ -1,7 +1,7 @@
 import { WebSocket } from 'ws'
 import { Reader } from 'protobufjs/minimal'
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { BaseComponents } from '../types'
+import { BaseComponents, Transport as ExportedTransport } from '../types'
 import { TransportMessage } from '../controllers/proto/archipelago'
 
 const PENDING_AUTH_TIMEOUT_MS = 400
@@ -27,9 +27,9 @@ export type ITransportRegistryComponent = IBaseComponent & {
 }
 
 export async function createTransportRegistryComponent(
-  components: Pick<BaseComponents, 'logs'>
+  components: Pick<BaseComponents, 'logs' | 'workerController'>
 ): Promise<ITransportRegistryComponent> {
-  const { logs } = components
+  const { logs, workerController } = components
   const logger = logs.getLogger('Transport Registry')
 
   let count = 0
@@ -94,7 +94,7 @@ export async function createTransportRegistryComponent(
             init: { maxIslandSize, type }
           } = transportMessage.message
           transport.maxIslandSize = maxIslandSize
-          logger.info(`New transport Connection: ${id}, ${type}`)
+          logger.info(`New transport Connection: ${id}, type: ${type}`)
           availableTransports.set(id, transport)
           break
         }
@@ -159,6 +159,20 @@ export async function createTransportRegistryComponent(
     }
     return transport.getConnectionString(userId, roomId)
   }
+
+  setInterval(() => {
+    const transports: ExportedTransport[] = []
+    for (const [id, { availableSeats, usersCount, maxIslandSize }] of availableTransports) {
+      transports.push({
+        id,
+        availableSeats,
+        usersCount,
+        maxIslandSize
+      })
+    }
+    workerController.setTransports(transports)
+  }, 1000)
+
   return {
     onTransportConnection,
     getConnectionString

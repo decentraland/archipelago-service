@@ -66,7 +66,9 @@ export class WorkerController {
 
   flush() {
     if (this.pendingPeerUpdates.size > 0 && this.workerStatus === 'idle') {
-      this.logger.info(`Flushing ${this.pendingPeerUpdates.size} updates`)
+      this.logger.info(
+        `Flushing ${this.pendingPeerUpdates.size} peer updates and ${this.transports.length} transport updates`
+      )
       const updatesToFlush = this.pendingPeerUpdates
       this.pendingPeerUpdates = new Map()
 

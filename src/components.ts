@@ -46,7 +46,7 @@ export async function initComponents(): Promise<AppComponents> {
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const nats = await createNatsComponent({ config, logs })
   const workerController = await createWorkerControllerComponent(config, logs)
-  const transportRegistry = await createTransportRegistryComponent({ logs })
+  const transportRegistry = await createTransportRegistryComponent({ logs, workerController })
 
   return {
     config,

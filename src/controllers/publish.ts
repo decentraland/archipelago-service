@@ -28,7 +28,7 @@ export async function setupPublishing({ nats, logs, workerController, transportR
 
         if (!connStr) {
           // TODO(hugo): this a big problem, there is an inconsistency between the state archipelago has (the worker) and the reality
-          logger.error('Unhandled error: cannot get connection string for transport ${update.transportId}')
+          logger.error(`Unhandled error: cannot get connection string for transport ${update.transportId}`)
           return
         }
 
