@@ -51,6 +51,8 @@ export class ArchipelagoController {
   private joinDistance: number
   private leaveDistance: number
   private islandIdGenerator = sequentialIdGenerator('I')
+
+  private pendingNewPeers = new Map<string, PeerData>()
   private pendingUpdates: IslandUpdates = {}
 
   updatesSubscribers: Set<UpdateSubscriber> = new Set()
@@ -93,6 +95,7 @@ export class ArchipelagoController {
     // the transport is actually down, but we don't want to assign new peers
     // there
     for (const island of this.islands.values()) {
+      // TODO: test this
       if (!transportIds.has(island.transportId)) {
         island.maxPeers = 0
       }
@@ -103,8 +106,7 @@ export class ArchipelagoController {
     for (const change of changes) {
       const { id, position, preferedIslandId } = change
       if (!this.peers.has(id)) {
-        this.peers.set(id, change)
-        this.createIsland([change])
+        this.pendingNewPeers.set(id, change)
       } else {
         const peer = this.peers.get(id)!
         peer.position = position
@@ -170,6 +172,12 @@ export class ArchipelagoController {
   }
 
   flush(): IslandUpdates {
+    for (const [id, change] of this.pendingNewPeers) {
+      this.peers.set(id, change)
+      this.createIsland([change])
+    }
+    this.pendingNewPeers.clear()
+
     const affectedIslands = new Set<string>()
     for (const island of this.islands.values()) {
       if (island._geometryDirty) {
@@ -272,6 +280,14 @@ export class ArchipelagoController {
         maxPeers = transport.maxIslandSize
       }
     }
+
+    // TODO
+    // try {
+    // getConnectionStrings (group)
+    // } catch() {
+    //     connectionStrings = p2p.getConnectionStrings()
+    //     transportId = p2p
+    // }
 
     const island: Island = {
       id: newIslandId,
