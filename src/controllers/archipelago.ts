@@ -263,10 +263,11 @@ export class ArchipelagoController {
       reservedSeatsPerTransport.set(island.transportId, reserved + (island.maxPeers - island.peers.length))
     }
 
-    let transport = this.transports.get(0)!
+    const p2pTransport = this.transports.get(0)!
+    let transport = p2pTransport
 
     for (const [id, t] of this.transports) {
-      if (id === 0) {
+      if (id === p2pTransport.id) {
         continue
       }
 
@@ -276,8 +277,17 @@ export class ArchipelagoController {
       }
     }
 
+    let connStrs: Record<string, string>
     const peerIds = group.map((p) => p.id)
-    const connStrs = await transport.getConnectionStrings(peerIds, newIslandId)
+    try {
+      connStrs = await transport.getConnectionStrings(peerIds, newIslandId)
+    } catch (err: any) {
+      this.logger.warn(err)
+      transport = p2pTransport
+
+      // NOTE: this won't fail
+      connStrs = await transport.getConnectionStrings(peerIds, newIslandId)
+    }
 
     const island: Island = {
       id: newIslandId,
