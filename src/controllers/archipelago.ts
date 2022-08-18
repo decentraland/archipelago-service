@@ -100,12 +100,11 @@ export class ArchipelagoController {
   }
 
   onPeerPositionsUpdate(changes: PeerPositionChange[]): void {
-    const affectedIslands: Set<string> = new Set()
     for (const change of changes) {
       const { id, position, preferedIslandId } = change
       if (!this.peers.has(id)) {
         this.peers.set(id, change)
-        this.createIsland([this.peers.get(id)!], affectedIslands)
+        this.createIsland([change])
       } else {
         const peer = this.peers.get(id)!
         peer.position = position
@@ -119,7 +118,6 @@ export class ArchipelagoController {
         if (peer.islandId) {
           const island = this.islands.get(peer.islandId)!
           island._geometryDirty = true
-          affectedIslands.add(peer.islandId)
         }
       }
     }
@@ -239,12 +237,12 @@ export class ArchipelagoController {
       island._geometryDirty = true
 
       for (const group of peerGroups) {
-        this.createIsland(group, affectedIslands)
+        affectedIslands.add(this.createIsland(group))
       }
     }
   }
 
-  private createIsland(group: PeerData[], affectedIslands: Set<string>) {
+  private createIsland(group: PeerData[]) {
     const newIslandId = this.islandIdGenerator.generateId()
 
     const reservedSeatsPerTransport = new Map<number, number>()
@@ -301,9 +299,10 @@ export class ArchipelagoController {
     }
 
     this.islands.set(newIslandId, island)
-    affectedIslands.add(newIslandId)
 
     this.setPeersIsland(island, group)
+
+    return newIslandId
   }
 
   private mergeIntoIfPossible(islandToMergeInto: Island, anIsland: Island) {
