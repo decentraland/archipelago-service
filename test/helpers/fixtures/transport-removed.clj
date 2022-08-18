@@ -13,9 +13,7 @@
 (ensureIslandsCountWithTransport 1 1)
 
 ; transport 1 is removed
-(configureTransports [
-     [0 0 0 50] ; p2p
-  ])
+(removeTransports [1])
 (move ["3" 16 0 16])
 (ensureIslandsCount 2)
 (ensureIslandsCountWithTransport 1 1)

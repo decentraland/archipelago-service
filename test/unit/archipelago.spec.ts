@@ -19,8 +19,7 @@ describe('archipelago', () => {
       }
     })
 
-    const transports = new Map<number, Transport>()
-    transports.set(0, {
+    archipelago.onTransportConnected({
       id: 0,
       availableSeats: -1,
       usersCount: -1,
@@ -33,7 +32,6 @@ describe('archipelago', () => {
         return Promise.resolve(connStrs)
       }
     })
-    archipelago.setTransports(transports)
   })
 
   function setPositionArrays(...positions: PositionWithId[]) {

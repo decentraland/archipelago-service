@@ -85,15 +85,18 @@ export class ArchipelagoController {
     loop()
   }
 
-  setTransports(transports: Map<number, Transport>): void {
-    this.transports = transports
+  onTransportConnected(transport: Transport): void {
+    this.transports.set(transport.id, transport)
+  }
 
+  onTransportDisconnected(id: number): void {
+    this.transports.delete(id)
     // NOTE(hugo): we don't recreate islands, this will happen naturally if
     // the transport is actually down, but we don't want to assign new peers
     // there
     for (const island of this.islands.values()) {
       // TODO: test this
-      if (!transports.has(island.transportId)) {
+      if (island.transportId === id) {
         island.maxPeers = 0
       }
     }

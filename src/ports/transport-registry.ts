@@ -1,30 +1,41 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { Transport } from '../types'
 
+export type TransportListener = {
+  onTransportConnected(transport: Transport): void
+  onTransportDisconnected(id: number): void
+}
+
 export type ITransportRegistryComponent = IBaseComponent & {
   onTransportConnected(transport: Transport): void
   onTransportDisconnected(id: number): void
-  getTransports(): Map<number, Transport>
+  setListener(listener: TransportListener): void
 }
 
 export async function createTransportRegistryComponent(): Promise<ITransportRegistryComponent> {
-  const availableTransports = new Map<number, Transport>()
+  let listener: TransportListener | undefined = undefined
 
   function onTransportConnected(transport: Transport) {
-    availableTransports.set(transport.id, transport)
+    if (!listener) {
+      throw new Error('No listener defined')
+    }
+    listener.onTransportConnected(transport)
   }
 
   function onTransportDisconnected(id: number) {
-    availableTransports.delete(id)
+    if (!listener) {
+      throw new Error('No listener defined')
+    }
+    listener.onTransportDisconnected(id)
   }
 
-  function getTransports() {
-    return availableTransports
+  function setListener(l: TransportListener) {
+    listener = l
   }
 
   return {
     onTransportConnected,
     onTransportDisconnected,
-    getTransports
+    setListener
   }
 }

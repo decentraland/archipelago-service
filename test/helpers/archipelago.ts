@@ -77,8 +77,7 @@ export function configureLibs(closure: BaseClosure) {
       }
     })
 
-    const transports = new Map<number, Transport>()
-    transports.set(0, {
+    archipelago.onTransportConnected({
       id: 0,
       availableSeats: -1,
       usersCount: -1,
@@ -91,17 +90,14 @@ export function configureLibs(closure: BaseClosure) {
         return Promise.resolve(connStrs)
       }
     })
-    archipelago.setTransports(transports)
     closure.def('archipelago', archipelago)
   })
 
   closure.defJsFunction('configureTransports', (args: [number, number, number, number][]) => {
     const archipelago = closure.get('archipelago') as ArchipelagoController
 
-    const transports = new Map<number, Transport>()
-
     for (const [id, availableSeats, usersCount, maxIslandSize] of args) {
-      transports.set(id, {
+      archipelago.onTransportConnected({
         id,
         availableSeats,
         usersCount,
@@ -116,7 +112,16 @@ export function configureLibs(closure: BaseClosure) {
       })
     }
 
-    archipelago.setTransports(transports)
+    return archipelago.flush()
+  })
+
+  closure.defJsFunction('removeTransports', (args: number[]) => {
+    const archipelago = closure.get('archipelago') as ArchipelagoController
+
+    for (const id of args) {
+      archipelago.onTransportDisconnected(id)
+    }
+
     return archipelago.flush()
   })
 

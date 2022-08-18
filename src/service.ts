@@ -46,10 +46,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
     }
   })
 
-  setInterval(() => {
-    const transports = transportRegistry.getTransports()
-    archipelago.setTransports(transports)
-  }, 1000)
+  transportRegistry.setListener(archipelago)
 
   const islandsStatusUpdateFreq =
     (await config.getNumber('ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL')) ??
