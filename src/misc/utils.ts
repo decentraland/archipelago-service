@@ -1,5 +1,3 @@
-import { ILoggerComponent } from '@well-known-components/interfaces'
-
 /**
  * Finds the index of the element that is first according to the provided ordering
  * @param array the array in which to look up the index

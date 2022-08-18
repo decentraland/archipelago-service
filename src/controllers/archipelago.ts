@@ -74,7 +74,9 @@ export class ArchipelagoController {
     const loop = () => {
       if (!this.disposed) {
         const startTime = Date.now()
-        this.flush()
+        this.flush().catch((err) => {
+          this.logger.error(err)
+        })
         const flushElapsed = Date.now() - startTime
         setTimeout(loop, Math.max(this.flushFrequency * 1000 - flushElapsed), 1) // At least 1 ms between flushes
       }
