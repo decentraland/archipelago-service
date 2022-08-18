@@ -44,7 +44,7 @@ function squared(n: number) {
 }
 
 export class ArchipelagoController {
-  private transports: Transport[] = []
+  private transports = new Map<number, Transport>()
   private peers: Map<string, PeerData> = new Map()
   private islands: Map<string, Island> = new Map()
   private currentSequence: number = 0
@@ -83,20 +83,15 @@ export class ArchipelagoController {
     loop()
   }
 
-  setTransports(transports: Transport[]): void {
+  setTransports(transports: Map<number, Transport>): void {
     this.transports = transports
-
-    const transportIds = new Set<number>()
-    for (const transport of transports) {
-      transportIds.add(transport.id)
-    }
 
     // NOTE(hugo): we don't recreate islands, this will happen naturally if
     // the transport is actually down, but we don't want to assign new peers
     // there
     for (const island of this.islands.values()) {
       // TODO: test this
-      if (!transportIds.has(island.transportId)) {
+      if (!transports.has(island.transportId)) {
         island.maxPeers = 0
       }
     }
@@ -203,7 +198,7 @@ export class ArchipelagoController {
           }
         }
         if (islandsIntersected.length > 0) {
-          this.mergeIslands(island, ...islandsIntersected)
+          await this.mergeIslands(island, ...islandsIntersected)
         }
       }
     }
@@ -263,37 +258,27 @@ export class ArchipelagoController {
       reservedSeatsPerTransport.set(island.transportId, reserved + (island.maxPeers - island.peers.length))
     }
 
-    let transportId = 0 // p2p
-    let maxPeers = 0
+    let transport = this.transports.get(0)!
 
-    for (const transport of this.transports) {
-      if (transport.id === 0) {
-        if (transportId === 0) {
-          maxPeers = transport.maxIslandSize
-        }
+    for (const [id, t] of this.transports) {
+      if (id === 0) {
         continue
       }
 
       const reservedSeats = reservedSeatsPerTransport.get(transport.id) || 0
-      if (transport.availableSeats - reservedSeats >= transport.maxIslandSize) {
-        transportId = transport.id
-        maxPeers = transport.maxIslandSize
+      if (t.availableSeats - reservedSeats >= t.maxIslandSize) {
+        transport = t
       }
     }
 
-    // TODO
-    // try {
-    // getConnectionStrings (group)
-    // } catch() {
-    //     connectionStrings = p2p.getConnectionStrings()
-    //     transportId = p2p
-    // }
+    const peerIds = group.map((p) => p.id)
+    const connStrs = await transport.getConnectionStrings(peerIds, newIslandId)
 
     const island: Island = {
       id: newIslandId,
-      transportId,
+      transportId: transport.id,
       peers: group,
-      maxPeers,
+      maxPeers: transport.maxIslandSize,
       sequenceId: ++this.currentSequence,
       _geometryDirty: true,
       _recalculateGeometryIfNeeded() {
@@ -316,29 +301,41 @@ export class ArchipelagoController {
 
     this.islands.set(newIslandId, island)
 
-    this.setPeersIsland(island, group)
+    this.setPeersIsland(island, group, connStrs)
 
     return newIslandId
   }
 
-  private mergeIntoIfPossible(islandToMergeInto: Island, anIsland: Island) {
-    function canMerge(islandToMergeInto: Island, anIsland: Island) {
-      return islandToMergeInto.peers.length + anIsland.peers.length <= islandToMergeInto.maxPeers
+  private async mergeIntoIfPossible(islandToMergeInto: Island, anIsland: Island) {
+    const canMerge = islandToMergeInto.peers.length + anIsland.peers.length <= islandToMergeInto.maxPeers
+    if (!canMerge) {
+      return false
     }
 
-    if (canMerge(islandToMergeInto, anIsland)) {
+    const transport = this.transports.get(islandToMergeInto.transportId)
+    if (!transport) {
+      return false
+    }
+
+    try {
+      const connStrs = await transport.getConnectionStrings(
+        anIsland.peers.map((p) => p.id),
+        islandToMergeInto.id
+      )
+
       islandToMergeInto.peers.push(...anIsland.peers)
-      this.setPeersIsland(islandToMergeInto, anIsland.peers)
+      this.setPeersIsland(islandToMergeInto, anIsland.peers, connStrs)
       this.islands.delete(anIsland.id)
       islandToMergeInto._geometryDirty = true
 
       return true
-    } else {
+    } catch (err: any) {
+      this.logger.warn(err)
       return false
     }
   }
 
-  private mergeIslands(...islands: Island[]) {
+  private async mergeIslands(...islands: Island[]) {
     const sortedIslands = islands.sort((i1, i2) =>
       i1.peers.length === i2.peers.length
         ? Math.sign(i1.sequenceId - i2.sequenceId)
@@ -359,11 +356,11 @@ export class ArchipelagoController {
       const preferedIsland = preferedIslandId ? biggestIslands.find((it) => it.id === preferedIslandId) : undefined
 
       if (preferedIsland) {
-        merged = this.mergeIntoIfPossible(preferedIsland, anIsland)
+        merged = await this.mergeIntoIfPossible(preferedIsland, anIsland)
       }
 
       for (let i = 0; !merged && i < biggestIslands.length; i++) {
-        merged = this.mergeIntoIfPossible(biggestIslands[i], anIsland)
+        merged = await this.mergeIntoIfPossible(biggestIslands[i], anIsland)
       }
 
       if (!merged) {
@@ -372,7 +369,7 @@ export class ArchipelagoController {
     }
   }
 
-  private setPeersIsland(island: Island, peers: PeerData[]) {
+  private setPeersIsland(island: Island, peers: PeerData[], connStrs: Record<string, string>) {
     for (const peer of peers) {
       const previousIslandId = peer.islandId
       peer.islandId = island.id
@@ -380,7 +377,7 @@ export class ArchipelagoController {
         action: 'changeTo',
         islandId: island.id,
         fromIslandId: previousIslandId,
-        transportId: island.transportId
+        connStr: connStrs[peer.id]!
       }
     }
   }

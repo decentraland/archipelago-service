@@ -7,14 +7,6 @@ import { v4 } from 'uuid'
 
 const PENDING_AUTH_TIMEOUT_MS = 400
 
-export type RegisteredTransport = {
-  availableSeats: number
-  usersCount: number
-  maxIslandSize: number
-  lastHeartbeat: number
-  getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>>
-}
-
 type PendingAuthRequest = {
   started: number
   resolve: (connStrs: Record<string, string>) => void
@@ -24,8 +16,7 @@ type PendingAuthRequest = {
 
 export type ITransportRegistryComponent = IBaseComponent & {
   onTransportConnection(ws: WebSocket): void
-  getConnectionStrings(id: number, userIds: string[], roomId: string): Promise<undefined | Record<string, string>>
-  getTransports(): Transport[]
+  getTransports(): Map<number, Transport>
 }
 
 export async function createTransportRegistryComponent(
@@ -36,12 +27,12 @@ export async function createTransportRegistryComponent(
 
   let count = 0
 
-  const availableTransports = new Map<number, RegisteredTransport>()
+  const availableTransports = new Map<number, Transport>()
   availableTransports.set(0, {
+    id: 0,
     availableSeats: -1,
     usersCount: -1,
     maxIslandSize: 50,
-    lastHeartbeat: 0,
     getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>> {
       const connStrs: Record<string, string> = {}
       for (const userId of userIds) {
@@ -58,11 +49,11 @@ export async function createTransportRegistryComponent(
 
     const pendingAuthRequests = new Map<string, PendingAuthRequest>()
 
-    const transport: RegisteredTransport = {
+    const transport: Transport = {
+      id,
       availableSeats: 0,
       usersCount: 0,
       maxIslandSize: 0,
-      lastHeartbeat: 0,
       getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>> {
         return new Promise<Record<string, string>>((resolve, reject) => {
           const requestId = v4()
@@ -113,7 +104,6 @@ export async function createTransportRegistryComponent(
 
           transport.availableSeats = availableSeats
           transport.usersCount = usersCount
-          transport.lastHeartbeat = Date.now()
           break
         }
         case 'authResponse': {
@@ -171,22 +161,12 @@ export async function createTransportRegistryComponent(
     return transport.getConnectionStrings(userIds, roomId)
   }
 
-  function getTransports(): Transport[] {
-    const transports: Transport[] = []
-    for (const [id, { availableSeats, usersCount, maxIslandSize }] of availableTransports) {
-      transports.push({
-        id,
-        availableSeats,
-        usersCount,
-        maxIslandSize
-      })
-    }
-    return transports
+  function getTransports() {
+    return availableTransports
   }
 
   return {
     onTransportConnection,
-    getConnectionStrings,
     getTransports
   }
 }

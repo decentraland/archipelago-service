@@ -76,5 +76,5 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   }, serviceDiscoveryUpdateFreq)
 
   await setupListener(archipelago, { nats, config, logs })
-  await setupPublishing(archipelago, { nats, transportRegistry, logs })
+  await setupPublishing(archipelago, { nats })
 }

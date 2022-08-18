@@ -7,17 +7,6 @@ import { Island, UpdateSubscriber } from '../../src/types'
 describe('publishing', () => {
   it('should publish island changed messages', async () => {
     const nats = await createLocalNatsComponent()
-    const logs = await createLogComponent({})
-
-    const transportRegistry = {
-      getConnectionStrings(id: number, userIds: string[], roomId: string): Promise<Record<string, string>> {
-        const connStrs: Record<string, string> = {}
-        for (const userId of userIds) {
-          connStrs[userId] = `${id}:${userId}:${roomId}`
-        }
-        return Promise.resolve(connStrs)
-      }
-    }
 
     const island: Island = {
       id: 'i1',
@@ -44,7 +33,7 @@ describe('publishing', () => {
       }
     }
 
-    await setupPublishing(archipelago, { nats, logs, transportRegistry })
+    await setupPublishing(archipelago, { nats })
 
     expect(registeredSubscriber).toBeTruthy()
 
@@ -55,7 +44,7 @@ describe('publishing', () => {
       peer1: {
         action: 'changeTo',
         islandId: island.id,
-        transportId: 0
+        connStr: 'test'
       }
     })
 
@@ -65,7 +54,7 @@ describe('publishing', () => {
         expect.objectContaining({
           fromIslandId: undefined,
           islandId: island.id,
-          connStr: `0:peer1:${island.id}`,
+          connStr: 'test',
           peers: {
             peer2: { x: 0, y: 0, z: 0 },
             peer3: { x: 0, y: 0, z: 0 }
@@ -84,17 +73,6 @@ describe('publishing', () => {
 
   it('should publish island island left', async () => {
     const nats = await createLocalNatsComponent()
-    const logs = await createLogComponent({})
-
-    const transportRegistry = {
-      getConnectionStrings(id: number, userIds: string[], roomId: string): Promise<Record<string, string>> {
-        const connStrs: Record<string, string> = {}
-        for (const userId of userIds) {
-          connStrs[userId] = `${id}:${userId}:${roomId}`
-        }
-        return Promise.resolve(connStrs)
-      }
-    }
 
     let registeredSubscriber: UpdateSubscriber | undefined = undefined
     const archipelago = {
@@ -106,7 +84,7 @@ describe('publishing', () => {
       }
     }
 
-    await setupPublishing(archipelago, { nats, logs, transportRegistry })
+    await setupPublishing(archipelago, { nats })
 
     expect(registeredSubscriber).toBeTruthy()
 

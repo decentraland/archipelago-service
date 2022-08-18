@@ -41,12 +41,13 @@ export type Transport = {
   availableSeats: number
   usersCount: number
   maxIslandSize: number
+  getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>>
 }
 
 export type ChangeToIslandUpdate = {
   action: 'changeTo'
   islandId: string
-  transportId: number
+  connStr: string
   fromIslandId?: string
 }
 

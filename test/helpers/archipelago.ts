@@ -1,4 +1,4 @@
-import { Island, PeerPositionChange, Position3D } from '../../src/types'
+import { Island, Transport, PeerPositionChange, Position3D } from '../../src/types'
 import { ArchipelagoController } from '../../src/controllers/archipelago'
 import { BaseClosure, evaluate } from 'tiny-clojure'
 import { NodeError } from 'tiny-clojure/dist/types'
@@ -76,24 +76,47 @@ export function configureLibs(closure: BaseClosure) {
         leaveDistance: 80
       }
     })
-    archipelago.setTransports([
-      {
-        id: 0,
-        availableSeats: -1,
-        usersCount: -1,
-        maxIslandSize: 200
+
+    const transports = new Map<number, Transport>()
+    transports.set(0, {
+      id: 0,
+      availableSeats: -1,
+      usersCount: -1,
+      maxIslandSize: 200,
+      getConnectionStrings: (userIds: string[], roomId: string): Promise<Record<string, string>> => {
+        const connStrs: Record<string, string> = {}
+        for (const userId of userIds) {
+          connStrs[userId] = `p2p:${roomId}.${userId}`
+        }
+        return Promise.resolve(connStrs)
       }
-    ])
+    })
+    archipelago.setTransports(transports)
     closure.def('archipelago', archipelago)
   })
 
   closure.defJsFunction('configureTransports', (args: [number, number, number, number][]) => {
     const archipelago = closure.get('archipelago') as ArchipelagoController
-    archipelago.setTransports(
-      args.map(([id, availableSeats, usersCount, maxIslandSize]) => {
-        return { id, availableSeats, usersCount, maxIslandSize }
+
+    const transports = new Map<number, Transport>()
+
+    for (const [id, availableSeats, usersCount, maxIslandSize] of args) {
+      transports.set(id, {
+        id,
+        availableSeats,
+        usersCount,
+        maxIslandSize,
+        getConnectionStrings: (userIds: string[], roomId: string): Promise<Record<string, string>> => {
+          const connStrs: Record<string, string> = {}
+          for (const userId of userIds) {
+            connStrs[userId] = `p2p:${roomId}.${userId}`
+          }
+          return Promise.resolve(connStrs)
+        }
       })
-    )
+    }
+
+    archipelago.setTransports(transports)
     return archipelago.flush()
   })
 

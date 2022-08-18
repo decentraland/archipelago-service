@@ -1,7 +1,7 @@
 import { ArchipelagoController } from '../../src/controllers/archipelago'
 
 import expect from 'assert'
-import { PeerPositionChange, IslandUpdates, ChangeToIslandUpdate } from '../../src/types'
+import { PeerPositionChange, IslandUpdates, ChangeToIslandUpdate, Transport } from '../../src/types'
 import { sequentialIdGenerator } from '../../src/misc/idGenerator'
 import { expectIslandsWith, expectIslandWith, setMultiplePeersAround } from '../helpers/archipelago'
 import { createLogComponent } from '@well-known-components/logger'
@@ -19,14 +19,21 @@ describe('archipelago', () => {
       }
     })
 
-    archipelago.setTransports([
-      {
-        id: 0,
-        availableSeats: -1,
-        usersCount: -1,
-        maxIslandSize: 200
+    const transports = new Map<number, Transport>()
+    transports.set(0, {
+      id: 0,
+      availableSeats: -1,
+      usersCount: -1,
+      maxIslandSize: 200,
+      getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>> {
+        const connStrs: Record<string, string> = {}
+        for (const userId of userIds) {
+          connStrs[userId] = `p2p:${roomId}.${userId}`
+        }
+        return Promise.resolve(connStrs)
       }
-    ])
+    })
+    archipelago.setTransports(transports)
   })
 
   function setPositionArrays(...positions: PositionWithId[]) {
