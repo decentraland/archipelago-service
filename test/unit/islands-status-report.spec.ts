@@ -8,8 +8,6 @@ import { createConfigComponent } from '@well-known-components/env-config-provide
 
 describe('island-status-reporting', () => {
   it('should publish to NATS', async () => {
-    const logs = await createLogComponent({})
-    const config = createConfigComponent({})
     const nats = await createLocalNatsComponent()
     const islands: Island[] = [
       {
@@ -20,8 +18,7 @@ describe('island-status-reporting', () => {
         peers: [],
         sequenceId: 10,
         transportId: 0,
-        _geometryDirty: false,
-        _recalculateGeometryIfNeeded: () => {}
+        _geometryDirty: false
       }
     ]
 
@@ -31,7 +28,7 @@ describe('island-status-reporting', () => {
       getIslands: () => islands
     }
     const { publishReport } = await setupIslandsStatusReporting(archipelago, { nats })
-    await publishReport()
+    publishReport()
 
     for await (const message of s.generator) {
       const { data } = IslandStatusMessage.decode(Reader.create(message.data))

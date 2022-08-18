@@ -31,7 +31,6 @@ export type Island = {
   _center?: Position3D
   _radius?: number
   _geometryDirty: boolean
-  _recalculateGeometryIfNeeded: () => void
 }
 
 export type PeerPositionChange = { id: string; position: Position3D; preferedIslandId?: string }

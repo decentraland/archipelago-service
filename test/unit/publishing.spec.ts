@@ -19,8 +19,7 @@ describe('publishing', () => {
         { id: 'peer3', position: [0, 0, 0] }
       ],
       transportId: 0,
-      _geometryDirty: false,
-      _recalculateGeometryIfNeeded: () => {}
+      _geometryDirty: false
     }
 
     let registeredSubscriber: UpdateSubscriber | undefined = undefined

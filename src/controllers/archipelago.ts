@@ -39,6 +39,15 @@ function islandGeometryCalculator(peers: PeerData[]): [Position3D, number] {
   return [center, radius]
 }
 
+function recalculateGeometryIfNeeded(island: Island) {
+  if (island.peers.length > 0 && (island._geometryDirty || !island._radius || !island._center)) {
+    const [center, radius] = islandGeometryCalculator(island.peers)
+    island._center = center
+    island._radius = radius
+    island._geometryDirty = false
+  }
+}
+
 function squared(n: number) {
   return n * n
 }
@@ -296,20 +305,12 @@ export class ArchipelagoController {
       maxPeers: transport.maxIslandSize,
       sequenceId: ++this.currentSequence,
       _geometryDirty: true,
-      _recalculateGeometryIfNeeded() {
-        if (this.peers.length > 0 && (this._geometryDirty || !this._radius || !this._center)) {
-          const [center, radius] = islandGeometryCalculator(this.peers)
-          this._center = center
-          this._radius = radius
-          this._geometryDirty = false
-        }
-      },
       get center() {
-        this._recalculateGeometryIfNeeded()
+        recalculateGeometryIfNeeded(this)
         return this._center!
       },
       get radius() {
-        this._recalculateGeometryIfNeeded()
+        recalculateGeometryIfNeeded(this)
         return this._radius!
       }
     }
