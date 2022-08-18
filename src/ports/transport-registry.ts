@@ -3,6 +3,7 @@ import { Reader } from 'protobufjs/minimal'
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { BaseComponents, Transport } from '../types'
 import { TransportMessage } from '../controllers/proto/archipelago'
+import { v4 } from 'uuid'
 
 const PENDING_AUTH_TIMEOUT_MS = 400
 
@@ -11,19 +12,19 @@ export type RegisteredTransport = {
   usersCount: number
   maxIslandSize: number
   lastHeartbeat: number
-  getConnectionString(userId: string, roomId: string): Promise<string>
+  getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>>
 }
 
 type PendingAuthRequest = {
   started: number
-  resolve: (connectionString: string) => void
+  resolve: (connStrs: Record<string, string>) => void
   reject: (error: Error) => void
   timeout: undefined | NodeJS.Timeout
 }
 
 export type ITransportRegistryComponent = IBaseComponent & {
   onTransportConnection(ws: WebSocket): void
-  getConnectionString(id: number, userId: string, roomId: string): Promise<undefined | string>
+  getConnectionStrings(id: number, userIds: string[], roomId: string): Promise<undefined | Record<string, string>>
   getTransports(): Transport[]
 }
 
@@ -41,8 +42,12 @@ export async function createTransportRegistryComponent(
     usersCount: -1,
     maxIslandSize: 50,
     lastHeartbeat: 0,
-    getConnectionString(userId: string, roomId: string): Promise<string> {
-      return Promise.resolve(`p2p:${roomId}.${userId}`)
+    getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>> {
+      const connStrs: Record<string, string> = {}
+      for (const userId of userIds) {
+        connStrs[userId] = `p2p:${roomId}.${userId}`
+      }
+      return Promise.resolve(connStrs)
     }
   })
 
@@ -58,26 +63,28 @@ export async function createTransportRegistryComponent(
       usersCount: 0,
       maxIslandSize: 0,
       lastHeartbeat: 0,
-      getConnectionString(userId: string, roomId: string): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
+      getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>> {
+        return new Promise<Record<string, string>>((resolve, reject) => {
+          const requestId = v4()
           ws.send(
             TransportMessage.encode({
               message: {
                 $case: 'authRequest',
                 authRequest: {
-                  userId,
+                  requestId,
+                  userIds,
                   roomId
                 }
               }
             }).finish()
           )
 
-          pendingAuthRequests.set(`${userId}-${roomId}`, {
+          pendingAuthRequests.set(requestId, {
             started: Date.now(),
             resolve,
             reject,
             timeout: setTimeout(() => {
-              const pending = pendingAuthRequests.get(`${userId}-${roomId}`)
+              const pending = pendingAuthRequests.get(requestId)
               if (pending) {
                 pending.reject(new Error('request timeout'))
               }
@@ -111,17 +118,16 @@ export async function createTransportRegistryComponent(
         }
         case 'authResponse': {
           const {
-            authResponse: { userId, roomId, connectionString }
+            authResponse: { requestId, connStrs }
           } = transportMessage.message
 
-          const key = `${userId}-${roomId}`
-          const pending = pendingAuthRequests.get(key)
+          const pending = pendingAuthRequests.get(requestId)
           if (pending) {
-            pending.resolve(connectionString)
+            pending.resolve(connStrs)
             if (pending.timeout) {
               clearTimeout(pending.timeout)
             }
-            pendingAuthRequests.delete(key)
+            pendingAuthRequests.delete(requestId)
           }
           break
         }
@@ -153,12 +159,16 @@ export async function createTransportRegistryComponent(
     })
   }
 
-  async function getConnectionString(id: number, userId: string, roomId: string): Promise<undefined | string> {
+  async function getConnectionStrings(
+    id: number,
+    userIds: string[],
+    roomId: string
+  ): Promise<undefined | Record<string, string>> {
     const transport = availableTransports.get(id)
     if (!transport) {
       return undefined
     }
-    return transport.getConnectionString(userId, roomId)
+    return transport.getConnectionStrings(userIds, roomId)
   }
 
   function getTransports(): Transport[] {
@@ -176,7 +186,7 @@ export async function createTransportRegistryComponent(
 
   return {
     onTransportConnection,
-    getConnectionString,
+    getConnectionStrings,
     getTransports
   }
 }

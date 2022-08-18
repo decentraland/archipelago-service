@@ -57,14 +57,14 @@ message TransportHeartbeat {
 }
 
 message TransportAuthorizationRequest {
-  string user_id = 1;
+  string request_id = 1;
   string room_id = 2;
+  repeated string user_ids = 3;
 }
 
 message TransportAuthorizationResponse {
-  string user_id = 1;
-  string room_id = 2;
-  string connection_string = 3;
+  string request_id = 1;
+  map<string, string> conn_strs = 2;
 }
 
 message TransportMessage {

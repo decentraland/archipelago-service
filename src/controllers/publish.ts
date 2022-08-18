@@ -4,7 +4,7 @@ import { ArchipelagoController } from './archipelago'
 import { IslandChangedMessage, JoinIslandMessage, LeftIslandMessage } from './proto/archipelago'
 
 type Components = Pick<AppComponents, 'nats' | 'logs'> & {
-  transportRegistry: Pick<ITransportRegistryComponent, 'getConnectionString'>
+  transportRegistry: Pick<ITransportRegistryComponent, 'getConnectionStrings'>
 }
 
 export async function setupPublishing(
@@ -27,7 +27,8 @@ export async function setupPublishing(
           return
         }
 
-        const connStr = await transportRegistry.getConnectionString(update.transportId, peerId, update.islandId)
+        const connStrs = await transportRegistry.getConnectionStrings(update.transportId, [peerId], update.islandId)
+        const connStr = connStrs && connStrs[peerId]
 
         if (!connStr) {
           // TODO(hugo): this a big problem, there is an inconsistency between the state archipelago has (the worker) and the reality

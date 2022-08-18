@@ -10,8 +10,12 @@ describe('publishing', () => {
     const logs = await createLogComponent({})
 
     const transportRegistry = {
-      async getConnectionString(transportId: number, userId: string, roomId: string): Promise<string> {
-        return `${transportId}:${userId}:${roomId}`
+      getConnectionStrings(id: number, userIds: string[], roomId: string): Promise<Record<string, string>> {
+        const connStrs: Record<string, string> = {}
+        for (const userId of userIds) {
+          connStrs[userId] = `${id}:${userId}:${roomId}`
+        }
+        return Promise.resolve(connStrs)
       }
     }
 
@@ -83,8 +87,12 @@ describe('publishing', () => {
     const logs = await createLogComponent({})
 
     const transportRegistry = {
-      async getConnectionString(transportId: number, userId: string, roomId: string): Promise<string> {
-        return `${transportId}:${userId}:${roomId}`
+      getConnectionStrings(id: number, userIds: string[], roomId: string): Promise<Record<string, string>> {
+        const connStrs: Record<string, string> = {}
+        for (const userId of userIds) {
+          connStrs[userId] = `${id}:${userId}:${roomId}`
+        }
+        return Promise.resolve(connStrs)
       }
     }
 
