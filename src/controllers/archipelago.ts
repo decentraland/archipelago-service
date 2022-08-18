@@ -171,10 +171,10 @@ export class ArchipelagoController {
     }
   }
 
-  flush(): IslandUpdates {
+  async flush(): Promise<IslandUpdates> {
     for (const [id, change] of this.pendingNewPeers) {
       this.peers.set(id, change)
-      this.createIsland([change])
+      await this.createIsland([change])
     }
     this.pendingNewPeers.clear()
 
@@ -186,7 +186,7 @@ export class ArchipelagoController {
     }
 
     for (const islandId of affectedIslands) {
-      this.checkSplitIsland(this.islands.get(islandId)!, affectedIslands)
+      await this.checkSplitIsland(this.islands.get(islandId)!, affectedIslands)
     }
 
     // NOTE: check if islands can be merged
@@ -217,7 +217,7 @@ export class ArchipelagoController {
     return updates
   }
 
-  private checkSplitIsland(island: Island, affectedIslands: Set<string>) {
+  private async checkSplitIsland(island: Island, affectedIslands: Set<string>) {
     const peerGroups: PeerData[][] = []
 
     for (const peer of island.peers) {
@@ -245,12 +245,12 @@ export class ArchipelagoController {
       island._geometryDirty = true
 
       for (const group of peerGroups) {
-        affectedIslands.add(this.createIsland(group))
+        affectedIslands.add(await this.createIsland(group))
       }
     }
   }
 
-  private createIsland(group: PeerData[]) {
+  private async createIsland(group: PeerData[]): Promise<string> {
     const newIslandId = this.islandIdGenerator.generateId()
 
     const reservedSeatsPerTransport = new Map<number, number>()

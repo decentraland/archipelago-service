@@ -47,7 +47,7 @@ export function expectIslandsCount(archipelago: ArchipelagoController, count: nu
   assert.strictEqual(archipelago.getIslands().length, count)
 }
 
-export function setMultiplePeersAround(
+export async function setMultiplePeersAround(
   archipelago: ArchipelagoController,
   position: Position3D,
   qty: number,
@@ -61,7 +61,7 @@ export function setMultiplePeersAround(
   }
 
   archipelago.onPeerPositionsUpdate(requests)
-  archipelago.flush()
+  await archipelago.flush()
 
   return requests
 }
@@ -94,14 +94,14 @@ export function configureLibs(closure: BaseClosure) {
         return { id, availableSeats, usersCount, maxIslandSize }
       })
     )
-    archipelago.flush()
+    return archipelago.flush()
   })
 
   // (move ...[peer x y z])
   closure.defJsFunction('move', (...args: [string, number, number, number][]) => {
     const archipelago = closure.get('archipelago') as ArchipelagoController
     archipelago.onPeerPositionsUpdate(args.map(([id, ...position]) => ({ id, position })))
-    archipelago.flush()
+    return archipelago.flush()
   })
 
   // (getIslands archipelago?)
@@ -147,15 +147,15 @@ export function configureLibs(closure: BaseClosure) {
   })
 
   // (disconnect [...ids] arch?)
-  closure.defJsFunction('disconnect', (ids, arch) => {
+  closure.defJsFunction('disconnect', async (ids, arch) => {
     const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     if (typeof ids == 'string') {
       archipelago.onPeersRemoved([ids])
-      const updates = archipelago.flush()
+      const updates = await archipelago.flush()
       assert(updates[ids].action === 'leave', `Peer ${ids} must be deleted`)
     } else if (Array.isArray(ids)) {
       archipelago.onPeersRemoved(ids)
-      const updates = archipelago.flush()
+      const updates = await archipelago.flush()
       ids.forEach(($: any) => assert(updates[$].action === 'leave', `Peer ${$} must be deleted`))
     } else {
       throw new Error('Invalid argument')
