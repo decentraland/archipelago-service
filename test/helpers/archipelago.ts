@@ -76,20 +76,6 @@ export function configureLibs(closure: BaseClosure) {
         leaveDistance: 80
       }
     })
-
-    archipelago.onTransportConnected({
-      id: 0,
-      availableSeats: -1,
-      usersCount: -1,
-      maxIslandSize: 200,
-      getConnectionStrings: (userIds: string[], roomId: string): Promise<Record<string, string>> => {
-        const connStrs: Record<string, string> = {}
-        for (const userId of userIds) {
-          connStrs[userId] = `p2p:${roomId}.${userId}`
-        }
-        return Promise.resolve(connStrs)
-      }
-    })
     closure.def('archipelago', archipelago)
   })
 

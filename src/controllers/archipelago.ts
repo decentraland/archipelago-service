@@ -80,6 +80,20 @@ export class ArchipelagoController {
     this.joinDistance = joinDistance
     this.leaveDistance = leaveDistance
 
+    this.transports.set(0, {
+      id: 0,
+      availableSeats: 0,
+      usersCount: 0,
+      maxIslandSize: 100,
+      async getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>> {
+        const connStrs: Record<string, string> = {}
+        for (const userId of userIds) {
+          connStrs[userId] = `p2p:${roomId}:${userId}`
+        }
+        return connStrs
+      }
+    })
+
     const loop = () => {
       if (!this.disposed) {
         const startTime = Date.now()

@@ -1,7 +1,6 @@
 ; initialize the archipelago
 (configure)
 (configureTransports [
-     [0 0 0 50] ; p2p
      [1 6 0 3] 
   ])
 
@@ -13,7 +12,6 @@
 (ensureIslandsCountWithTransport 1 1)
 
 (configureTransports [
-     [0 0 0 50] ; p2p
      [1 3 3 3] 
   ])
 
@@ -26,7 +24,6 @@
 
 
 (configureTransports [
-     [0 0 0 50] ; p2p
      [1 2 4 3] 
   ])
 
@@ -47,7 +44,6 @@
 (ensureIslandsCountWithTransport 1 0)
 
 (configureTransports [
-     [0 0 0 50] ; p2p
      [1 0 6 3] 
   ])
 

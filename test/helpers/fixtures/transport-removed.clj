@@ -1,7 +1,6 @@
 ; initialize the archipelago
 (configure)
 (configureTransports [
-     [0 0 0 50] ; p2p
      [1 6 0 3] 
   ])
 
