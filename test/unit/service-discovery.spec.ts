@@ -2,7 +2,6 @@ import { createLocalNatsComponent, decodeJson } from '@well-known-components/nat
 import { ServiceDiscoveryMessage } from '../../src/types'
 import { setupServiceDiscovery } from '../../src/controllers/service-discovery'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
-import { createLogComponent } from '@well-known-components/logger'
 
 describe('service-discovery', () => {
   it('should publish to NATS', async () => {

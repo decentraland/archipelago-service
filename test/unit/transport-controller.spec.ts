@@ -3,6 +3,7 @@ import { TransportMessage, TransportType } from '../../src/controllers/proto/arc
 import { createTransportRegistryComponent } from '../../src/ports/transport-registry'
 import { Transport } from '../../src/types'
 import { Reader } from 'protobufjs/minimal'
+import { delay } from '../helpers/archipelago'
 
 describe('transport-controller-unit', () => {
   it('handling transport', async () => {
@@ -118,22 +119,5 @@ describe('transport-controller-unit', () => {
 
     closeListener()
     expect(transports.has(transport.id)).toEqual(false)
-  })
-
-  it('termination because of ping', async () => {
-    const listeners = new Map<string, (data?: any) => void>()
-
-    const on: any = (event: string, cb: any) => {
-      listeners.set(event, cb)
-    }
-
-    const ws = {
-      on,
-      send: (_: Uint8Array) => {},
-      terminate: () => {},
-      ping: () => {}
-    }
-
-    handleUpgrade(console, transportRegistry, ws, 1)
   })
 })
