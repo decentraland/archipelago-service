@@ -1,8 +1,7 @@
 import { AppComponents, ServiceDiscoveryMessage } from '../types'
-import { JSONCodec } from '@well-known-components/nats-component'
+import { encodeJson } from '@well-known-components/nats-component'
 
 export async function setupServiceDiscovery({ nats, config }: Pick<AppComponents, 'nats' | 'config'>) {
-  const jsonCodec = JSONCodec()
   const commitHash = await config.getString('COMMIT_HASH')
 
   function publishMessage() {
@@ -14,7 +13,7 @@ export async function setupServiceDiscovery({ nats, config }: Pick<AppComponents
       serverName: 'archipelago',
       status
     }
-    const encodedMsg = jsonCodec.encode(serviceDiscoveryMessage)
+    const encodedMsg = encodeJson(serviceDiscoveryMessage)
     nats.publish('service.discovery', encodedMsg)
   }
 
