@@ -1,9 +1,6 @@
 import { Lifecycle } from '@well-known-components/interfaces'
-import { setupIslandsStatusReporting } from './controllers/islands-status-report'
 import { setupListener } from './controllers/listener'
-import { setupPublishing } from './controllers/publish'
 import { setupRouter } from './controllers/routes'
-import { setupServiceDiscovery } from './controllers/service-discovery'
 import { ArchipelagoController } from './controllers/archipelago'
 import { AppComponents, GlobalContext, TestComponents } from './types'
 
@@ -29,7 +26,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  const { nats, config, logs, transportRegistry } = components
+  const { nats, config, logs, transportRegistry, publisher } = components
 
   const flushFrequency = await config.requireNumber('ARCHIPELAGO_FLUSH_FREQUENCY')
   const joinDistance = await config.requireNumber('ARCHIPELAGO_JOIN_DISTANCE')
@@ -38,7 +35,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   const logger = logs.getLogger('service')
 
   const archipelago = new ArchipelagoController({
-    logs,
+    components: { logs, publisher },
     flushFrequency,
     parameters: {
       joinDistance,
@@ -51,10 +48,9 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   const islandsStatusUpdateFreq =
     (await config.getNumber('ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL')) ??
     DEFAULT_ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL
-  const reporting = await setupIslandsStatusReporting(archipelago, { nats })
-  setInterval(async () => {
+  setInterval(() => {
     try {
-      reporting.publishReport()
+      publisher.publishIslandsReport(archipelago.getIslands())
     } catch (err: any) {
       logger.error(err)
     }
@@ -62,16 +58,14 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
 
   const serviceDiscoveryUpdateFreq =
     (await config.getNumber('ARCHIPELAGO_STATUS_UPDATE_INTERVAL')) ?? DEFAULT_ARCHIPELAGO_STATUS_UPDATE_INTERVAL
-  const serviceDiscovery = await setupServiceDiscovery({ nats, config })
 
   setInterval(() => {
     try {
-      serviceDiscovery.publishMessage()
+      publisher.publishServiceDiscoveryMessage()
     } catch (err: any) {
       logger.error(err)
     }
   }, serviceDiscoveryUpdateFreq)
 
   await setupListener(archipelago, { nats, config, logs })
-  await setupPublishing(archipelago, { nats })
 }

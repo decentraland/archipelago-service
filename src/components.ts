@@ -8,6 +8,7 @@ import { metricDeclarations } from './metrics'
 import { createNatsComponent } from '@well-known-components/nats-component'
 import { createTransportRegistryComponent } from './ports/transport-registry'
 import { WebSocketServer } from 'ws'
+import { createPublisherComponent } from './ports/publisher'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -22,6 +23,7 @@ export async function initComponents(): Promise<AppComponents> {
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const nats = await createNatsComponent({ config, logs })
   const transportRegistry = await createTransportRegistryComponent()
+  const publisher = await createPublisherComponent({ config, nats })
 
   return {
     config,
@@ -31,6 +33,7 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     nats,
-    transportRegistry
+    transportRegistry,
+    publisher
   }
 }

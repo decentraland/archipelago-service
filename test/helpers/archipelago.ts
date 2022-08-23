@@ -1,4 +1,4 @@
-import { Island, Transport, PeerPositionChange, Position3D } from '../../src/types'
+import { Island, PeerPositionChange, Position3D, ChangeToIslandUpdate } from '../../src/types'
 import { ArchipelagoController } from '../../src/controllers/archipelago'
 import { BaseClosure, evaluate } from 'tiny-clojure'
 import { NodeError } from 'tiny-clojure/dist/types'
@@ -69,8 +69,14 @@ export async function setMultiplePeersAround(
 export function configureLibs(closure: BaseClosure) {
   // (configure { options })
   closure.defJsFunction('configure', async () => {
+    const logs = await createLogComponent({})
+    const publisher = {
+      onChangeToIsland: (peerId: string, island: Island, change: ChangeToIslandUpdate) => {},
+      onPeerLeft: (peerId: string, islandId: string) => {}
+    }
+
     const archipelago = new ArchipelagoController({
-      logs: await createLogComponent({}),
+      components: { logs, publisher },
       parameters: {
         joinDistance: 64,
         leaveDistance: 80
@@ -164,13 +170,13 @@ export function configureLibs(closure: BaseClosure) {
   closure.defJsFunction('disconnect', async (ids, arch) => {
     const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     if (typeof ids == 'string') {
-      archipelago.onPeersRemoved([ids])
+      archipelago.onPeerRemoved(ids)
       const updates = await archipelago.flush()
-      assert(updates[ids].action === 'leave', `Peer ${ids} must be deleted`)
+      assert(updates.get(ids).action === 'leave', `Peer ${ids} must be deleted`)
     } else if (Array.isArray(ids)) {
-      archipelago.onPeersRemoved(ids)
+      ids.forEach((id) => archipelago.onPeerRemoved(id))
       const updates = await archipelago.flush()
-      ids.forEach(($: any) => assert(updates[$].action === 'leave', `Peer ${$} must be deleted`))
+      ids.forEach(($: any) => assert(updates.get($).action === 'leave', `Peer ${$} must be deleted`))
     } else {
       throw new Error('Invalid argument')
     }

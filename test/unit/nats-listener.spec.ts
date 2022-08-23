@@ -14,7 +14,7 @@ describe('nats listener', () => {
   let nats: INatsComponent
   let listener: { stop: () => void } | undefined = undefined
 
-  let archipelago: Pick<ArchipelagoController, 'onPeersRemoved' | 'onPeerPositionsUpdate'>
+  let archipelago: Pick<ArchipelagoController, 'onPeerRemoved' | 'onPeerPositionsUpdate'>
 
   const config = createConfigComponent({
     CHECK_HEARTBEAT_INTERVAL: '100'
@@ -22,7 +22,7 @@ describe('nats listener', () => {
 
   beforeEach(() => {
     archipelago = {
-      onPeersRemoved(_: string[]): void {},
+      onPeerRemoved(_: string): void {},
       onPeerPositionsUpdate(_: PeerPositionChange[]): void {}
     }
   })
@@ -39,19 +39,19 @@ describe('nats listener', () => {
   })
 
   it('should listen connections and clear peers', async () => {
-    const onPeersRemovedStub = jest.spyOn(archipelago, 'onPeersRemoved')
+    const onPeerRemovedStub = jest.spyOn(archipelago, 'onPeerRemoved')
     listener = await setupListener(archipelago, { logs, nats, config })
     nats.publish('peer.peer1.connect')
     await delay(100)
-    expect(onPeersRemovedStub).toHaveBeenCalledWith(['peer1'])
+    expect(onPeerRemovedStub).toHaveBeenCalledWith('peer1')
   })
 
   it('should listen disconnections and clear peers', async () => {
-    const onPeersRemovedStub = jest.spyOn(archipelago, 'onPeersRemoved')
+    const onPeerRemovedStub = jest.spyOn(archipelago, 'onPeerRemoved')
     listener = await setupListener(archipelago, { logs, nats, config })
     nats.publish('peer.peer1.disconnect')
     await delay(100)
-    expect(onPeersRemovedStub).toHaveBeenCalledWith(['peer1'])
+    expect(onPeerRemovedStub).toHaveBeenCalledWith('peer1')
   })
 
   it('should listen hearbeats and set positions', async () => {

@@ -1,11 +1,26 @@
-import { PeerData, Position3D, Island, IslandUpdates, PeerPositionChange, UpdateSubscriber, Transport } from '../types'
+import {
+  PeerData,
+  Position3D,
+  Island,
+  PeerPositionChange,
+  Transport,
+  BaseComponents,
+  ChangeToIslandUpdate,
+  LeaveIslandUpdate,
+  IslandUpdates
+} from '../types'
 
 import { findMax, popMax } from '../misc/utils'
 import { IdGenerator, sequentialIdGenerator } from '../misc/idGenerator'
 import { ILoggerComponent } from '@well-known-components/interfaces'
+import { IPublisherComponent } from '../ports/publisher'
+
+type Publisher = Pick<IPublisherComponent, 'onPeerLeft' | 'onChangeToIsland'>
 
 export type Options = {
-  logs: ILoggerComponent
+  components: Pick<BaseComponents, 'logs'> & {
+    publisher: Publisher
+  }
   flushFrequency?: number
   parameters: {
     joinDistance: number
@@ -60,11 +75,10 @@ export class ArchipelagoController {
   private joinDistance: number
   private leaveDistance: number
   private islandIdGenerator = sequentialIdGenerator('I')
+  private publisher: Publisher
 
   private pendingNewPeers = new Map<string, PeerData>()
-  private pendingUpdates: IslandUpdates = {}
-
-  updatesSubscribers: Set<UpdateSubscriber> = new Set()
+  private pendingUpdates = new Map<string, ChangeToIslandUpdate | LeaveIslandUpdate>()
 
   flushFrequency: number
   logger: ILoggerComponent.ILogger
@@ -73,8 +87,13 @@ export class ArchipelagoController {
 
   disposed: boolean = false
 
-  constructor({ logs, flushFrequency, parameters: { joinDistance, leaveDistance } }: Options) {
+  constructor({
+    components: { logs, publisher },
+    flushFrequency,
+    parameters: { joinDistance, leaveDistance }
+  }: Options) {
     this.logger = logs.getLogger('Archipelago')
+    this.publisher = publisher
 
     this.flushFrequency = flushFrequency ?? 2
     this.joinDistance = joinDistance
@@ -160,36 +179,26 @@ export class ArchipelagoController {
     return this.peers.get(id)
   }
 
-  subscribeToUpdates(subscriber: UpdateSubscriber): void {
-    this.updatesSubscribers.add(subscriber)
-  }
+  onPeerRemoved(id: string): void {
+    const peer = this.peers.get(id)
 
-  unsubscribeFromUpdates(subscriber: UpdateSubscriber): void {
-    this.updatesSubscribers.delete(subscriber)
-  }
+    if (peer) {
+      this.peers.delete(id)
+      if (peer.islandId) {
+        const island = this.islands.get(peer.islandId)!
 
-  onPeersRemoved(ids: string[]): void {
-    for (const id of ids) {
-      const peer = this.peers.get(id)
-
-      if (peer) {
-        this.peers.delete(id)
-        if (peer.islandId) {
-          const island = this.islands.get(peer.islandId)!
-
-          const idx = island.peers.findIndex((it) => it.id === id)
-          if (idx >= 0) {
-            island.peers.splice(idx, 1)
-          }
-
-          if (island.peers.length === 0) {
-            this.islands.delete(island.id)
-          }
-
-          island._geometryDirty = true
-
-          this.pendingUpdates[peer.id] = { action: 'leave', islandId: peer.islandId }
+        const idx = island.peers.findIndex((it) => it.id === id)
+        if (idx >= 0) {
+          island.peers.splice(idx, 1)
         }
+
+        if (island.peers.length === 0) {
+          this.islands.delete(island.id)
+        }
+
+        island._geometryDirty = true
+
+        this.pendingUpdates.set(peer.id, { action: 'leave', islandId: peer.islandId })
       }
     }
   }
@@ -231,11 +240,16 @@ export class ArchipelagoController {
       }
     }
 
-    const updates = Object.assign({}, this.pendingUpdates)
-    this.pendingUpdates = {}
+    const updates = new Map(this.pendingUpdates)
+    this.pendingUpdates.clear()
 
-    for (const subscriber of this.updatesSubscribers) {
-      subscriber(updates)
+    for (const [peerId, update] of updates) {
+      if (update.action === 'changeTo') {
+        const island = this.islands.get(update.islandId)!
+        this.publisher.onChangeToIsland(peerId, island, update)
+      } else if (update.action === 'leave') {
+        this.publisher.onPeerLeft(peerId, update.islandId)
+      }
     }
     return updates
   }
@@ -403,12 +417,12 @@ export class ArchipelagoController {
     for (const peer of peers) {
       const previousIslandId = peer.islandId
       peer.islandId = island.id
-      this.pendingUpdates[peer.id] = {
+      this.pendingUpdates.set(peer.id, {
         action: 'changeTo',
         islandId: island.id,
         fromIslandId: previousIslandId,
         connStr: connStrs[peer.id]!
-      }
+      })
     }
   }
 

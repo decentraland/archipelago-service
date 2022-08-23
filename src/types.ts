@@ -9,6 +9,7 @@ import type {
 import { metricDeclarations } from './metrics'
 import { INatsComponent } from '@well-known-components/nats-component/dist/types'
 import { ITransportRegistryComponent } from './ports/transport-registry'
+import { IPublisherComponent } from './ports/publisher'
 
 export type Position3D = [number, number, number]
 export type TransportType = 'livekit' | 'ws' | 'p2p'
@@ -35,14 +36,6 @@ export type Island = {
 
 export type PeerPositionChange = { id: string; position: Position3D; preferedIslandId?: string }
 
-export type Transport = {
-  id: number
-  availableSeats: number
-  usersCount: number
-  maxIslandSize: number
-  getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>>
-}
-
 export type ChangeToIslandUpdate = {
   action: 'changeTo'
   islandId: string
@@ -55,8 +48,15 @@ export type LeaveIslandUpdate = {
   islandId: string
 }
 
-export type IslandUpdates = Record<string, ChangeToIslandUpdate | LeaveIslandUpdate>
-export type UpdateSubscriber = (updates: IslandUpdates) => any
+export type IslandUpdates = Map<string, ChangeToIslandUpdate | LeaveIslandUpdate>
+
+export type Transport = {
+  id: number
+  availableSeats: number
+  usersCount: number
+  maxIslandSize: number
+  getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>>
+}
 
 export type GlobalContext = {
   components: BaseComponents
@@ -71,6 +71,7 @@ export type BaseComponents = {
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   nats: INatsComponent
   transportRegistry: ITransportRegistryComponent
+  publisher: IPublisherComponent
 }
 
 // components used in runtime
@@ -96,10 +97,5 @@ export type HandlerContextWithPath<
 >
 
 export type Parcel = [number, number]
-
-export type ServiceDiscoveryMessage = {
-  serverName: string
-  status: any
-}
 
 export type Context<Path extends string = any> = IHttpServerComponent.PathAwareContext<GlobalContext, Path>

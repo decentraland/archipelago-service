@@ -1,7 +1,7 @@
 import { ArchipelagoController } from '../../src/controllers/archipelago'
 
 import expect from 'assert'
-import { PeerPositionChange, IslandUpdates, ChangeToIslandUpdate, Transport } from '../../src/types'
+import { PeerPositionChange, IslandUpdates, ChangeToIslandUpdate, Island } from '../../src/types'
 import { sequentialIdGenerator } from '../../src/misc/idGenerator'
 import { expectIslandsWith, expectIslandWith, setMultiplePeersAround } from '../helpers/archipelago'
 import { createLogComponent } from '@well-known-components/logger'
@@ -11,8 +11,14 @@ type PositionWithId = [string, number, number, number]
 describe('archipelago', () => {
   let archipelago: ArchipelagoController
   beforeEach(async () => {
+    const publisher = {
+      onChangeToIsland: (peerId: string, island: Island, change: ChangeToIslandUpdate) => {},
+      onPeerLeft: (peerId: string, islandId: string) => {}
+    }
+
+    const logs = await createLogComponent({})
     archipelago = new ArchipelagoController({
-      logs: await createLogComponent({}),
+      components: { logs, publisher },
       parameters: {
         joinDistance: 64,
         leaveDistance: 80
@@ -124,7 +130,7 @@ describe('archipelago', () => {
 
     expectIslandsWith(archipelago, ['1', '2', '3', '4'])
 
-    archipelago.onPeersRemoved(['4'])
+    archipelago.onPeerRemoved('4')
     await archipelago.flush()
 
     expectIslandsWith(archipelago, ['1', '2'], ['3'])
@@ -135,8 +141,8 @@ describe('archipelago', () => {
 
     expectIslandsWith(archipelago, ['1', '2'])
 
-    archipelago.onPeersRemoved(['1'])
-    archipelago.onPeersRemoved(['2'])
+    archipelago.onPeerRemoved('1')
+    archipelago.onPeerRemoved('2')
     await archipelago.flush()
 
     await setPositionArrays(['1', 0, 0, 0])
@@ -145,20 +151,20 @@ describe('archipelago', () => {
   })
 
   function expectChangedTo(updates: IslandUpdates, peerId: string, islandId: string, fromIslandId?: string) {
-    expect.strictEqual(updates[peerId].islandId, islandId)
-    expect.strictEqual(updates[peerId].action, 'changeTo')
+    expect.strictEqual(updates.get(peerId)!.islandId, islandId)
+    expect.strictEqual(updates.get(peerId)!.action, 'changeTo')
     if (fromIslandId) {
-      expect.strictEqual((updates[peerId] as ChangeToIslandUpdate).fromIslandId, fromIslandId)
+      expect.strictEqual((updates.get(peerId) as ChangeToIslandUpdate).fromIslandId, fromIslandId)
     }
   }
 
   function expectLeft(updates: IslandUpdates, peerId: string, islandId: string) {
-    expect.strictEqual(updates[peerId].islandId, islandId)
-    expect.strictEqual(updates[peerId].action, 'leave')
+    expect.strictEqual(updates.get(peerId).islandId, islandId)
+    expect.strictEqual(updates.get(peerId).action, 'leave')
   }
 
   function expectNoUpdate(updates: IslandUpdates, peerId: string) {
-    expect.strictEqual(typeof updates[peerId], 'undefined')
+    expect.strictEqual(typeof updates.get(peerId), 'undefined')
   }
 
   it('provides updates when setting positions', async () => {
@@ -191,7 +197,7 @@ describe('archipelago', () => {
     await setPositionArrays(['1', 0, 0, 0], ['2', 50, 0, 0], ['3', 100, 0, 0])
 
     expectIslandsWith(archipelago, ['1', '2', '3'])
-    archipelago.onPeersRemoved(['2'])
+    archipelago.onPeerRemoved('2')
 
     const updates = await archipelago.flush()
 
@@ -238,7 +244,7 @@ describe('archipelago', () => {
     expectIslandWith(archipelago, ...firstRequests.map((it) => it.id))
     expectIslandWith(archipelago, ...peerRequests.map((it) => it.id))
 
-    archipelago.onPeersRemoved(peerRequests.slice(0, 10).map((it) => it.id))
+    peerRequests.slice(0, 10).forEach((it) => archipelago.onPeerRemoved(it.id))
     await archipelago.flush()
 
     expect.strictEqual(archipelago.getIslands().length, 1)
@@ -334,11 +340,11 @@ describe('archipelago', () => {
     let updates = await archipelago.flush()
     expectIslandWith(archipelago, 'peer1', 'peer2')
 
-    expect.notStrictEqual(updates['peer1'].islandId, getIslandId(bigIsland))
+    expect.notStrictEqual(updates.get('peer1').islandId, getIslandId(bigIsland))
 
     updates = await setPositionArrays(['peer1', 0, 0, 0], ['peer2', 0, 0, 0])
 
-    expect.strictEqual(updates['peer1'].islandId, getIslandId(bigIsland))
-    expect.strictEqual(updates['peer2'].islandId, getIslandId(bigIsland))
+    expect.strictEqual(updates.get('peer1').islandId, getIslandId(bigIsland))
+    expect.strictEqual(updates.get('peer2').islandId, getIslandId(bigIsland))
   })
 })
