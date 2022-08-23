@@ -137,7 +137,6 @@ export class ArchipelagoController {
     // the transport is actually down, but we don't want to assign new peers
     // there
     for (const island of this.islands.values()) {
-      // TODO: test this
       if (island.transportId === id) {
         island.maxPeers = 0
       }
