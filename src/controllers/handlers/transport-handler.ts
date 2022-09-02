@@ -28,6 +28,7 @@ export function handleUpgrade(
 
   const transport: Transport = {
     id,
+    type: 'unknown',
     availableSeats: 0,
     usersCount: 0,
     maxIslandSize: 0,
@@ -70,6 +71,7 @@ export function handleUpgrade(
         const {
           init: { maxIslandSize, type }
         } = transportMessage.message
+        transport.type = type === 0 ? 'livekit' : 'ws'
         transport.maxIslandSize = maxIslandSize
         logger.info(`New transport Connection: ${id}, type: ${type}`)
         break
@@ -81,7 +83,7 @@ export function handleUpgrade(
 
         transport.availableSeats = availableSeats
         transport.usersCount = usersCount
-        transportRegistry.onTransportConnected(transport)
+        transportRegistry.onTransportHeartbeat(transport)
         break
       }
       case 'authResponse': {
