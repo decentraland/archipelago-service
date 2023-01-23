@@ -3,7 +3,7 @@ import { IHttpServerComponent, ILoggerComponent } from '@well-known-components/i
 import { WebSocket } from 'ws'
 import { GlobalContext, Transport } from '../../types'
 import { v4 } from 'uuid'
-import { TransportMessage } from '../proto/archipelago'
+import { TransportMessage } from '@dcl/protocol/out-ts/decentraland/kernel/comms/v3/archipelago.gen'
 import { ITransportRegistryComponent } from '../../ports/transport-registry'
 import { verify } from 'jsonwebtoken'
 
