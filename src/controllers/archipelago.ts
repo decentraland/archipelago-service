@@ -37,6 +37,7 @@ export type Options = {
     apiKey: string
     apiSecret: string
     host: string
+    islandSize?: number
   }
 }
 
@@ -121,12 +122,13 @@ export class ArchipelagoController {
         type: 'livekit',
         availableSeats: -1,
         usersCount: 0,
-        maxIslandSize: 100,
+        maxIslandSize: livekit.islandSize || 100,
         async getConnectionStrings(userIds: string[], roomId: string): Promise<Record<string, string>> {
           const connStrs: Record<string, string> = {}
           for (const userId of userIds) {
             const token = new AccessToken(livekit.apiKey, livekit.apiSecret, {
-              identity: userId
+              identity: userId,
+              ttl: 5 * 60 // 5 minutes
             })
             token.addGrant({ roomJoin: true, room: roomId, canPublish: true, canSubscribe: true })
             connStrs[userId] = `livekit:${livekit.host}?access_token=${token.toJwt()}`
