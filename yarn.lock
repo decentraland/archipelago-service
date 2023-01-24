@@ -291,7 +291,7 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@dcl/eslint-config@^1.0.3":
+"@dcl/eslint-config@^1.0.6":
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/@dcl/eslint-config/-/eslint-config-1.0.6.tgz#0ea563fef9bdf882140fa8cff6e99ad64ed78247"
   integrity sha512-KoJBhK/QhPVEmenPxlOnRvmstVCWdyeSBhcOYLPT0dcaQ3Rj7wttVGpWvufG6XDTQBZy7i9Fvqn90ewfYZJNwg==
@@ -315,15 +315,6 @@
   integrity sha512-oy1pTCm4oCpfRW4QdsTm7VhV+VLGUrUToAICuGcPmhzSWz8BzM/nWbExJGQ9FB/0LFOM8Dl+oM4Y4u0mtcYPVQ==
   dependencies:
     ts-proto "^1.126.1"
-
-"@dcl/rpc@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@dcl/rpc/-/rpc-0.1.0.tgz#6f74309f884eccc05accae5787a1bf9a73a778dd"
-  integrity sha512-m1FbOttH5QXeZzzR2L/1cJkr0isne5YiuS+OmZQQL/lapqaqsp03aWUzeYdwmVcRuW+6PLpFgU3GBAeW3CGjcg==
-  dependencies:
-    "@types/google-protobuf" "^3.15.5"
-    google-protobuf "^3.19.1"
-    mitt "^3.0.0"
 
 "@eslint/eslintrc@^1.4.1":
   version "1.4.1"
@@ -1028,7 +1019,7 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
-"@types/google-protobuf@^3.15.5", "@types/google-protobuf@^3.15.6":
+"@types/google-protobuf@^3.15.6":
   version "3.15.6"
   resolved "https://registry.yarnpkg.com/@types/google-protobuf/-/google-protobuf-3.15.6.tgz#674a69493ef2c849b95eafe69167ea59079eb504"
   integrity sha512-pYVNNJ+winC4aek+lZp93sIKxnXt5qMkuKmaqS3WGuTq0Bw1ZDYNBgzG5kkdtwcv+GmYJGo3yEg6z2cKKAiEdw==
@@ -1220,7 +1211,7 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@typescript-eslint/eslint-plugin@^5.24.0", "@typescript-eslint/eslint-plugin@^5.3.1":
+"@typescript-eslint/eslint-plugin@^5.3.1":
   version "5.49.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-5.49.0.tgz#d0b4556f0792194bf0c2fb297897efa321492389"
   integrity sha512-IhxabIpcf++TBaBa1h7jtOWyon80SXPRLDq0dVz5SLFC/eW6tofkw/O7Ar3lkx5z5U6wzbKDrl2larprp5kk5Q==
@@ -1235,7 +1226,7 @@
     semver "^7.3.7"
     tsutils "^3.21.0"
 
-"@typescript-eslint/parser@^5.25.0", "@typescript-eslint/parser@^5.3.1":
+"@typescript-eslint/parser@^5.3.1":
   version "5.49.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/parser/-/parser-5.49.0.tgz#d699734b2f20e16351e117417d34a2bc9d7c4b90"
   integrity sha512-veDlZN9mUhGqU31Qiv2qEp+XrJj5fgZpJ8PW30sHU+j/8/e5ruAhLaVDAeznS7A7i4ucb/s8IozpDtt9NqCkZg==
@@ -2281,7 +2272,7 @@ escodegen@^2.0.0:
   optionalDependencies:
     source-map "~0.6.1"
 
-eslint-config-prettier@^8.3.0, eslint-config-prettier@^8.5.0:
+eslint-config-prettier@^8.3.0:
   version "8.6.0"
   resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-8.6.0.tgz#dec1d29ab728f4fa63061774e1672ac4e363d207"
   integrity sha512-bAF0eLpLVqP5oEVUFKpMA+NnRFICwn9X8B5jrR9FcqnYBuPbqWEjTEspPWMj5ye6czoSLDweCzSo3Ko7gGrZaA==
@@ -2413,7 +2404,7 @@ eslint-visitor-keys@^3.3.0:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-3.3.0.tgz#f6480fa6b1f30efe2d1968aa8ac745b862469826"
   integrity sha512-mQ+suqKJVyeuwGYHAdjMFqjCyfl8+Ldnxuyp3ldiMBFKkvytrXUZWaiPCEav8qDHKty44bD+qV1IP4T+w+xXRA==
 
-eslint@^8.15.0, eslint@^8.2.0:
+eslint@^8.2.0:
   version "8.32.0"
   resolved "https://registry.yarnpkg.com/eslint/-/eslint-8.32.0.tgz#d9690056bb6f1a302bd991e7090f5b68fbaea861"
   integrity sha512-nETVXpnthqKPFyuY2FNjz/bEd6nbosRgKbkgS/y1C7LJop96gYHWpiguLecMHQ2XCPxn77DS0P+68WzG6vkZSQ==
@@ -2894,7 +2885,7 @@ globrex@^0.1.2:
   resolved "https://registry.yarnpkg.com/globrex/-/globrex-0.1.2.tgz#dd5d9ec826232730cd6793a5e33a9302985e6098"
   integrity sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==
 
-google-protobuf@^3.15.5, google-protobuf@^3.19.1, google-protobuf@^3.20.1:
+google-protobuf@^3.20.1:
   version "3.21.2"
   resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.21.2.tgz#4580a2bea8bbb291ee579d1fefb14d6fa3070ea4"
   integrity sha512-3MSOYFO5U9mPGikIYCzK0SaThypfGgS6bHqrUGXG3DPHCrb+txNqeEcns1W0lkGfk0rCyNXm7xB9rMxnCiZOoA==
@@ -4859,14 +4850,6 @@ protobufjs@^6.10.2, protobufjs@^6.11.3, protobufjs@^6.8.8:
     "@types/node" ">=13.7.0"
     long "^4.0.0"
 
-protoc-gen-dcl@^1.0.0-20220109214200.commit-f45e34a:
-  version "1.0.0-20220109214200.commit-f45e34a"
-  resolved "https://registry.yarnpkg.com/protoc-gen-dcl/-/protoc-gen-dcl-1.0.0-20220109214200.commit-f45e34a.tgz#5f10921324669f33b8bdf9985f3879c7bc35526c"
-  integrity sha512-C1H5Yo526BzYTBSV5MpchTsdkTiZPvPslqiKOQ2ydk3iRECsalcrx9NWaTSgGlwnNzwcJYgJNXtVye/BhBNYBA==
-  dependencies:
-    "@dcl/rpc" "^0.1.0"
-    ts-protoc-gen "^0.15.0"
-
 proxy-addr@~2.0.7:
   version "2.0.7"
   resolved "https://registry.yarnpkg.com/proxy-addr/-/proxy-addr-2.0.7.tgz#f19fe69ceab311eeb94b42e70e8c2070f9ba1025"
@@ -5456,13 +5439,6 @@ ts-proto@^1.120.0, ts-proto@^1.126.1:
     protobufjs "^6.11.3"
     ts-poet "^6.2.0"
     ts-proto-descriptors "1.7.1"
-
-ts-protoc-gen@^0.15.0:
-  version "0.15.0"
-  resolved "https://registry.yarnpkg.com/ts-protoc-gen/-/ts-protoc-gen-0.15.0.tgz#2fec5930b46def7dcc9fa73c060d770b7b076b7b"
-  integrity sha512-TycnzEyrdVDlATJ3bWFTtra3SCiEP0W0vySXReAuEygXCUr1j2uaVyL0DhzjwuUdQoW5oXPwk6oZWeA0955V+g==
-  dependencies:
-    google-protobuf "^3.15.5"
 
 tsconfig-paths@^3.14.1:
   version "3.14.1"
