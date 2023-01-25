@@ -16,7 +16,7 @@ RUN chmod +x /tini
 # install dependencies
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
-RUN yarn install --prod --frozen-lockfile
+RUN yarn install --frozen-lockfile
 
 
 # build the app
@@ -25,7 +25,7 @@ RUN yarn build
 RUN yarn test
 
 # remove devDependencies, keep only used dependencies
-RUN yarn install --frozen-lockfile
+RUN yarn install --prod --frozen-lockfile
 
 
 ########################## END OF BUILD STAGE ##########################
