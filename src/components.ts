@@ -17,15 +17,16 @@ export async function initComponents(): Promise<AppComponents> {
   const logs = await createLogComponent({})
 
   const wss = new WebSocketServer({ noServer: true })
+  const metrics = await createMetricsComponent(metricDeclarations, { config })
   const server = await createServerComponent<GlobalContext>({ config, logs, ws: wss }, {})
+
+  await instrumentHttpServerWithMetrics({ server, metrics, config })
+
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = await createFetchComponent()
-  const metrics = await createMetricsComponent(metricDeclarations, { config })
   const nats = await createNatsComponent({ config, logs })
   const transportRegistry = await createTransportRegistryComponent()
   const publisher = await createPublisherComponent({ config, nats })
-
-  await instrumentHttpServerWithMetrics({ server, metrics, config })
 
   return {
     config,
