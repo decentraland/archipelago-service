@@ -41,7 +41,7 @@
     "protocVersion": "21.6"
   },
   "dependencies": {
-    "@dcl/protocol": "^1.0.0-4009547712.commit-472ea24",
+    "@dcl/protocol": "^1.0.0-4385856849.commit-b516dcb",
     "@well-known-components/env-config-provider": "^1.2.0",
     "@well-known-components/http-server": "^1.1.2",
     "@well-known-components/interfaces": "^1.1.3",
