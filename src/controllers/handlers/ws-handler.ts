@@ -13,6 +13,7 @@ export async function websocketHandler(
   return upgradeWebSocketResponse((socket) => {
     logger.debug('Websocket connected')
     const ws = socket as any as InternalWebSocket
+    ws.stage = Stage.HANDSHAKE
 
     ws.on('error', (error) => {
       logger.error(error)
@@ -27,6 +28,8 @@ export async function websocketHandler(
 
     handleSocketLinearProtocol(context.components, ws)
       .then(() => {
+        peersRegistry.onPeerConnected(ws.address!)
+
         const welcomeMessage = craftMessage({
           message: {
             $case: 'welcome',
@@ -42,12 +45,9 @@ export async function websocketHandler(
         logger.debug(`Welcome sent`, { address: ws.address! })
         ws.stage = Stage.READY
 
-        // NOTE: we ensure the peers is removed if was already connected
-        peersRegistry.onPeerRemoved(ws.address!)
-
         ws.on('close', () => {
           if (ws.address) {
-            peersRegistry.onPeerRemoved(ws.address)
+            peersRegistry.onPeerDisconnected(ws.address)
           }
         })
 

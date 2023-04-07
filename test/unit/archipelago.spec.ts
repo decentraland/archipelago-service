@@ -7,6 +7,7 @@ import { expectIslandsWith, expectIslandWith, setMultiplePeersAround } from '../
 import { createLogComponent } from '@well-known-components/logger'
 import { createTestMetricsComponent } from '@well-known-components/metrics'
 import { metricDeclarations } from '../../src/metrics'
+import { createConfigComponent } from '@well-known-components/env-config-provider'
 
 type PositionWithId = [string, number, number, number]
 
@@ -18,7 +19,8 @@ describe('archipelago', () => {
       onPeerLeft: (peerId: string, islandId: string) => {}
     }
 
-    const logs = await createLogComponent({})
+    const config = createConfigComponent({ LOG_LEVEL: 'INFO' })
+    const logs = await createLogComponent({ config })
     const metrics = createTestMetricsComponent(metricDeclarations)
 
     archipelago = new ArchipelagoController({

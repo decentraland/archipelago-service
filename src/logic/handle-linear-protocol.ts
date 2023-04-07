@@ -4,6 +4,7 @@ import { Authenticator } from '@dcl/crypto'
 import { wsAsAsyncChannel } from './ws-as-async-channel'
 import { normalizeAddress } from './address'
 import { craftMessage } from './craft-message'
+import { ClientPacket } from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
 
 export async function handleSocketLinearProtocol(
   { logs, ethereumProvider, peersRegistry }: Pick<AppComponents, 'logs' | 'peersRegistry' | 'ethereumProvider'>,
@@ -11,12 +12,12 @@ export async function handleSocketLinearProtocol(
 ) {
   const logger = logs.getLogger('LinearProtocol')
   // Wire the socket to a pushable channel
-  const channel = wsAsAsyncChannel(socket)
+  const channel = wsAsAsyncChannel<ClientPacket>(socket, ClientPacket.decode)
 
   try {
     // process the messages
     /// 1. the remote client sends their authentication message
-    let packet = await channel.yield(1000, 'Timed out waiting for peer identification')
+    let packet = await channel.yield(1000, 'Timed out waiting for challengeRequest')
 
     if (!packet.message || packet.message.$case !== 'challengeRequest') {
       throw new Error('Invalid protocol. challengeRequest packet missed')

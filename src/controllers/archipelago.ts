@@ -216,7 +216,7 @@ export class ArchipelagoController {
     return this.peers.has(id)
   }
 
-  onPeerRemoved(id: string): void {
+  onPeerDisconnected(id: string): void {
     const peer = this.peers.get(id)
 
     if (peer) {

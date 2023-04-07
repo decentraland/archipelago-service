@@ -1,11 +1,13 @@
-import { ClientPacket } from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
 import { AsyncQueue } from '@well-known-components/pushable-channel'
 
 import { InternalWebSocket } from '../types'
 
-export function wsAsAsyncChannel(socket: Pick<InternalWebSocket, 'on' | 'emit' | 'off' | 'end'>) {
+export function wsAsAsyncChannel<Packet>(
+  socket: Pick<InternalWebSocket, 'on' | 'emit' | 'off' | 'end'>,
+  decoder: (data: Uint8Array) => Packet
+) {
   // Wire the socket to a pushable channel
-  const channel = new AsyncQueue<ClientPacket>((queue, action) => {
+  const channel = new AsyncQueue<Packet>((queue, action) => {
     if (action === 'close') {
       socket.off('message')
       socket.off('close', closeChannel)
@@ -13,7 +15,7 @@ export function wsAsAsyncChannel(socket: Pick<InternalWebSocket, 'on' | 'emit' |
   })
   function processMessage(data: ArrayBuffer) {
     try {
-      channel.enqueue(ClientPacket.decode(new Uint8Array(data)))
+      channel.enqueue(decoder(new Uint8Array(data)))
     } catch (error: any) {
       socket.emit('error', error)
       try {
@@ -28,7 +30,7 @@ export function wsAsAsyncChannel(socket: Pick<InternalWebSocket, 'on' | 'emit' |
   socket.on('close', closeChannel)
   socket.on('error', closeChannel)
   return Object.assign(channel, {
-    async yield(timeoutMs: number, error?: string): Promise<ClientPacket> {
+    async yield(timeoutMs: number, error?: string): Promise<Packet> {
       if (timeoutMs) {
         const next: any = (await Promise.race([channel.next(), timeout(timeoutMs, error)])) as any
         if (next.done) throw new Error('Cannot consume message from closed AsyncQueue. ' + error)

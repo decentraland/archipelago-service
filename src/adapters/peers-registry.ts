@@ -2,24 +2,32 @@ import { IBaseComponent } from '@well-known-components/interfaces'
 import { PeerPositionChange } from '../types'
 
 export type PeersAdapter = {
-  onPeerRemoved(id: string): void
+  onPeerDisconnected(id: string): void
   onPeerPositionsUpdate(changes: PeerPositionChange[]): void
-  isPeerConnected(id: string): boolean
 }
 
 export type IPeersRegistryComponent = IBaseComponent &
   PeersAdapter & {
+    onPeerConnected(id: string): void
     setAdapter(l: PeersAdapter): void
+    isPeerConnected(id: string): boolean
   }
 
 export async function createPeersRegistry(): Promise<IPeersRegistryComponent> {
   let adapter: PeersAdapter | undefined = undefined
 
-  function onPeerRemoved(id: string): void {
+  const connectedPeers = new Set<string>()
+
+  function onPeerConnected(id: string): void {
+    connectedPeers.add(id)
+  }
+
+  function onPeerDisconnected(id: string): void {
     if (!adapter) {
       throw new Error('No adapter defined')
     }
-    adapter.onPeerRemoved(id)
+    connectedPeers.delete(id)
+    adapter.onPeerDisconnected(id)
   }
 
   function onPeerPositionsUpdate(changes: PeerPositionChange[]): void {
@@ -31,11 +39,7 @@ export async function createPeersRegistry(): Promise<IPeersRegistryComponent> {
   }
 
   function isPeerConnected(id: string): boolean {
-    if (!adapter) {
-      throw new Error('No adapter defined')
-    }
-
-    return adapter.isPeerConnected(id)
+    return connectedPeers.has(id)
   }
 
   function setAdapter(l: PeersAdapter) {
@@ -43,7 +47,8 @@ export async function createPeersRegistry(): Promise<IPeersRegistryComponent> {
   }
 
   return {
-    onPeerRemoved,
+    onPeerConnected,
+    onPeerDisconnected,
     onPeerPositionsUpdate,
     isPeerConnected,
     setAdapter
