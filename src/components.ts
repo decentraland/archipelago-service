@@ -1,5 +1,5 @@
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
-import { createServerComponent, createStatusCheckComponent } from '@well-known-components/http-server'
+import { createStatusCheckComponent } from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
 import { createFetchComponent } from './ports/fetch'
 import { createMetricsComponent, instrumentHttpServerWithMetrics } from '@well-known-components/metrics'
@@ -7,7 +7,7 @@ import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
 import { createNatsComponent } from '@well-known-components/nats-component'
 import { createTransportRegistryComponent } from './ports/transport-registry'
-import { WebSocketServer } from 'ws'
+import { createUwsHttpServer } from '@well-known-components/http-server/dist/uws'
 import { createPublisherComponent } from './ports/publisher'
 
 // Initialize all the components of the app
@@ -16,9 +16,8 @@ export async function initComponents(): Promise<AppComponents> {
 
   const logs = await createLogComponent({})
 
-  const wss = new WebSocketServer({ noServer: true })
   const metrics = await createMetricsComponent(metricDeclarations, { config })
-  const server = await createServerComponent<GlobalContext>({ config, logs, ws: wss }, {})
+  const server = await createUwsHttpServer<GlobalContext>({ config, logs }, { compression: false })
 
   await instrumentHttpServerWithMetrics({ server, metrics, config })
 
