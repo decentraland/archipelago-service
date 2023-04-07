@@ -1,5 +1,4 @@
 import { Lifecycle } from '@well-known-components/interfaces'
-import { setupListener } from './controllers/listener'
 import { setupRouter } from './controllers/routes'
 import { ArchipelagoController, Options } from './controllers/archipelago'
 import { AppComponents, GlobalContext, TestComponents } from './types'
@@ -26,7 +25,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  const { nats, metrics, config, logs, transportRegistry, publisher } = components
+  const { metrics, config, logs, transportRegistry, peersRegistry, publisher } = components
 
   const archipelagoConfig: Options = {
     components: { logs, publisher, metrics },
@@ -46,7 +45,8 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
 
   const archipelago = new ArchipelagoController(archipelagoConfig)
 
-  transportRegistry.setListener(archipelago)
+  transportRegistry.setAdapter(archipelago)
+  peersRegistry.setAdapter(archipelago)
 
   const islandsStatusUpdateFreq =
     (await config.getNumber('ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL')) ??
@@ -69,6 +69,4 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
       logger.error(err)
     }
   }, serviceDiscoveryUpdateFreq)
-
-  await setupListener(archipelago, { nats, config, logs })
 }

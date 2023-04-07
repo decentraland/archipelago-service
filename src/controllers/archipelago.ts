@@ -15,7 +15,7 @@ import { metricDeclarations } from '../metrics'
 import { findMax, popMax } from '../misc/utils'
 import { IdGenerator, sequentialIdGenerator } from '../misc/idGenerator'
 import { ILoggerComponent, IMetricsComponent } from '@well-known-components/interfaces'
-import { IPublisherComponent } from '../ports/publisher'
+import { IPublisherComponent } from '../adapters/publisher'
 import { AccessToken } from 'livekit-server-sdk'
 
 type Publisher = Pick<IPublisherComponent, 'onPeerLeft' | 'onChangeToIsland'>
@@ -210,6 +210,10 @@ export class ArchipelagoController {
 
   getPeerData(id: string): PeerData | undefined {
     return this.peers.get(id)
+  }
+
+  isPeerConnected(id: string): boolean {
+    return this.peers.has(id)
   }
 
   onPeerRemoved(id: string): void {
