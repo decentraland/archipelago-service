@@ -15,10 +15,8 @@ import { metricDeclarations } from '../metrics'
 import { findMax, popMax } from '../misc/utils'
 import { IdGenerator, sequentialIdGenerator } from '../misc/idGenerator'
 import { ILoggerComponent, IMetricsComponent } from '@well-known-components/interfaces'
-import { IPublisherComponent } from '../adapters/publisher'
 import { AccessToken } from 'livekit-server-sdk'
-
-type Publisher = Pick<IPublisherComponent, 'onPeerLeft' | 'onChangeToIsland'>
+import { IPeersRegistryComponent } from '../adapters/peers-registry'
 
 type Metrics = {
   peersCount: 0
@@ -26,9 +24,7 @@ type Metrics = {
 }
 
 export type Options = {
-  components: Pick<BaseComponents, 'logs' | 'metrics'> & {
-    publisher: Publisher
-  }
+  components: Pick<BaseComponents, 'logs' | 'metrics' | 'peersRegistry'>
   flushFrequency?: number
   roomPrefix?: string
   joinDistance: number
@@ -82,13 +78,13 @@ function squared(n: number) {
 
 export class ArchipelagoController {
   private transports = new Map<number, Transport>()
+  private peersRegistry: IPeersRegistryComponent
   private peers: Map<string, PeerData> = new Map()
   private islands: Map<string, Island> = new Map()
   private currentSequence: number = 0
   private joinDistance: number
   private leaveDistance: number
   private islandIdGenerator: IdGenerator
-  private publisher: Publisher
   private metrics: IMetricsComponent<keyof typeof metricDeclarations>
 
   private pendingNewPeers = new Map<string, PeerData>()
@@ -100,7 +96,7 @@ export class ArchipelagoController {
   disposed: boolean = false
 
   constructor({
-    components: { logs, publisher, metrics },
+    components: { logs, peersRegistry, metrics },
     flushFrequency,
     joinDistance,
     leaveDistance,
@@ -109,7 +105,7 @@ export class ArchipelagoController {
   }: Options) {
     this.logger = logs.getLogger('Archipelago')
     this.metrics = metrics
-    this.publisher = publisher
+    this.peersRegistry = peersRegistry
 
     this.flushFrequency = flushFrequency ?? 2
     this.joinDistance = joinDistance
@@ -309,9 +305,9 @@ export class ArchipelagoController {
       if (update.action === 'changeTo') {
         const island = this.islands.get(update.islandId)!
         this.logger.debug(`Publishing island change for ${peerId}`)
-        this.publisher.onChangeToIsland(peerId, island, update)
+        this.peersRegistry.onChangeToIsland(peerId, island, update)
       } else if (update.action === 'leave') {
-        this.publisher.onPeerLeft(peerId, update.islandId)
+        this.peersRegistry.onPeerLeft(peerId, update.islandId)
       }
     }
     return updates

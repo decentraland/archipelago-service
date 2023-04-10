@@ -1,15 +1,8 @@
 import { encodeJson } from '@well-known-components/nats-component'
-import { TemplatedApp } from 'uWebSockets.js'
-
-import { BaseComponents, ChangeToIslandUpdate, PeerData, Island } from '../types'
-import {
-  IslandChangedMessage,
-  IslandStatusMessage,
-  IslandData
-} from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
+import { BaseComponents, Island } from '../types'
+import { IslandStatusMessage, IslandData } from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
 
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { craftMessage } from '../logic/craft-message'
 
 export type ServiceDiscoveryMessage = {
   serverName: string
@@ -17,85 +10,15 @@ export type ServiceDiscoveryMessage = {
 }
 
 export type IPublisherComponent = IBaseComponent & {
-  onChangeToIsland(peerId: string, island: Island, change: ChangeToIslandUpdate): void
-  onPeerLeft(peerId: string, islandId: string): void
   publishServiceDiscoveryMessage(): void
   publishIslandsReport(islands: Island[]): void
 }
 
-export async function createPublisherComponent(
-  { nats, config, peersRegistry }: Pick<BaseComponents, 'config' | 'nats' | 'peersRegistry'>,
-  uws: TemplatedApp
-): Promise<IPublisherComponent> {
+export async function createPublisherComponent({
+  nats,
+  config
+}: Pick<BaseComponents, 'config' | 'nats'>): Promise<IPublisherComponent> {
   const commitHash = await config.getString('COMMIT_HASH')
-
-  function onChangeToIsland(peerId: string, toIsland: Island, update: ChangeToIslandUpdate) {
-    const islandChangedMessage: IslandChangedMessage = {
-      islandId: update.islandId,
-      connStr: update.connStr,
-      peers: {}
-    }
-
-    toIsland.peers.forEach((peerData: PeerData) => {
-      islandChangedMessage.peers[peerData.id] = {
-        x: peerData.position[0],
-        y: peerData.position[1],
-        z: peerData.position[2]
-      }
-    })
-    if (update.fromIslandId) {
-      islandChangedMessage.fromIslandId = update.fromIslandId
-    }
-
-    uws.publish(
-      `island.${update.islandId}`,
-      craftMessage({
-        message: {
-          $case: 'joinIsland',
-          joinIsland: {
-            islandId: update.islandId,
-            peerId: peerId
-          }
-        }
-      }),
-      true
-    )
-
-    const ws = peersRegistry.getPeerWs(peerId)
-    if (ws) {
-      if (update.fromIslandId) {
-        ws.unsubscribe(`island.${update.fromIslandId}`)
-      }
-
-      ws.subscribe(`island.${update.islandId}`)
-
-      ws.send(
-        craftMessage({
-          message: {
-            $case: 'islandChanged',
-            islandChanged: islandChangedMessage
-          }
-        }),
-        true
-      )
-    }
-  }
-
-  function onPeerLeft(peerId: string, islandId: string) {
-    uws.publish(
-      `island.${islandId}`,
-      craftMessage({
-        message: {
-          $case: 'leftIsland',
-          leftIsland: {
-            islandId: islandId,
-            peerId: peerId
-          }
-        }
-      }),
-      true
-    )
-  }
 
   function publishServiceDiscoveryMessage() {
     const status = {
@@ -129,8 +52,6 @@ export async function createPublisherComponent(
   }
 
   return {
-    onChangeToIsland,
-    onPeerLeft,
     publishServiceDiscoveryMessage,
     publishIslandsReport
   }
