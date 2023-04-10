@@ -7,7 +7,6 @@ import { createMetricsComponent, instrumentHttpServerWithMetrics } from '@well-k
 import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
 import { createNatsComponent } from '@well-known-components/nats-component'
-import { createTransportRegistryComponent } from './adapters/transport-registry'
 import { createUwsHttpServer } from '@well-known-components/http-server/dist/uws'
 import { createPublisherComponent } from './adapters/publisher'
 import { createPeersRegistry } from './adapters/peers-registry'
@@ -29,7 +28,6 @@ export async function initComponents(): Promise<AppComponents> {
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = await createFetchComponent()
   const nats = await createNatsComponent({ config, logs })
-  const transportRegistry = await createTransportRegistryComponent()
   const peersRegistry = await createPeersRegistry(uws)
   const publisher = await createPublisherComponent({ config, nats })
 
@@ -47,7 +45,6 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     nats,
-    transportRegistry,
     peersRegistry,
     publisher,
     ethereumProvider

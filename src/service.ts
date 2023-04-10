@@ -25,7 +25,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  const { metrics, config, logs, transportRegistry, peersRegistry, publisher } = components
+  const { metrics, config, logs, peersRegistry, publisher } = components
 
   const archipelagoConfig: Options = {
     components: { logs, peersRegistry, metrics },
@@ -45,7 +45,6 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
 
   const archipelago = new ArchipelagoController(archipelagoConfig)
 
-  transportRegistry.setAdapter(archipelago)
   peersRegistry.setAdapter(archipelago)
 
   const islandsStatusUpdateFreq =

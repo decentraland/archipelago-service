@@ -9,7 +9,6 @@ import type {
 } from '@well-known-components/interfaces'
 import { metricDeclarations } from './metrics'
 import { INatsComponent } from '@well-known-components/nats-component/dist/types'
-import { ITransportRegistryComponent } from './adapters/transport-registry'
 import { IPublisherComponent } from './adapters/publisher'
 import { WsUserData } from '@well-known-components/http-server/dist/uws'
 import { IPeersRegistryComponent } from './adapters/peers-registry'
@@ -74,7 +73,6 @@ export type BaseComponents = {
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   nats: INatsComponent
-  transportRegistry: ITransportRegistryComponent
   peersRegistry: IPeersRegistryComponent
   publisher: IPublisherComponent
   ethereumProvider: HTTPProvider
