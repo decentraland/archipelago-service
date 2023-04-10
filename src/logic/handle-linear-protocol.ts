@@ -4,7 +4,7 @@ import { Authenticator } from '@dcl/crypto'
 import { wsAsAsyncChannel } from './ws-as-async-channel'
 import { normalizeAddress } from './address'
 import { craftMessage } from './craft-message'
-import { ClientPacket } from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
+import { ClientPacket, KickedReason } from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
 
 export async function handleSocketLinearProtocol(
   { logs, ethereumProvider, peersRegistry }: Pick<AppComponents, 'logs' | 'peersRegistry' | 'ethereumProvider'>,
@@ -29,7 +29,8 @@ export async function handleSocketLinearProtocol(
     const address = normalizeAddress(packet.message.challengeRequest.address)
 
     const challengeToSign = 'dcl-' + Math.random().toString(36)
-    const alreadyConnected = peersRegistry.isPeerConnected(address)
+    const previousWs = peersRegistry.getPeerWs(address)
+    const alreadyConnected = !!previousWs
     logger.debug('Generating challenge', {
       challengeToSign,
       address,
@@ -65,6 +66,19 @@ export async function handleSocketLinearProtocol(
     if (result.ok) {
       socket.address = normalizeAddress(address)
       logger.debug(`Authentication successful`, { address: address })
+
+      if (previousWs) {
+        const kickedMessage = craftMessage({
+          message: {
+            $case: 'kicked',
+            kicked: { reason: KickedReason.KR_NEW_SESSION }
+          }
+        })
+        if (previousWs.send(kickedMessage, true) !== 1) {
+          logger.error('Closing connection: cannot send kicked message')
+        }
+        previousWs.end()
+      }
     } else {
       logger.warn(`Authentication failed`, { message: result.message } as any)
       throw new Error('Authentication failed')

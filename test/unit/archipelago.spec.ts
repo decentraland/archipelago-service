@@ -135,7 +135,7 @@ describe('archipelago', () => {
 
     expectIslandsWith(archipelago, ['1', '2', '3', '4'])
 
-    archipelago.onPeerRemoved('4')
+    archipelago.onPeerDisconnected('4')
     await archipelago.flush()
 
     expectIslandsWith(archipelago, ['1', '2'], ['3'])
@@ -146,8 +146,8 @@ describe('archipelago', () => {
 
     expectIslandsWith(archipelago, ['1', '2'])
 
-    archipelago.onPeerRemoved('1')
-    archipelago.onPeerRemoved('2')
+    archipelago.onPeerDisconnected('1')
+    archipelago.onPeerDisconnected('2')
     await archipelago.flush()
 
     await setPositionArrays(['1', 0, 0, 0])
@@ -202,7 +202,7 @@ describe('archipelago', () => {
     await setPositionArrays(['1', 0, 0, 0], ['2', 50, 0, 0], ['3', 100, 0, 0])
 
     expectIslandsWith(archipelago, ['1', '2', '3'])
-    archipelago.onPeerRemoved('2')
+    archipelago.onPeerDisconnected('2')
 
     const updates = await archipelago.flush()
 
@@ -250,7 +250,7 @@ describe('archipelago', () => {
     expectIslandWith(archipelago, ...firstRequests.map((it) => it.id))
     expectIslandWith(archipelago, ...peerRequests.map((it) => it.id))
 
-    peerRequests.slice(0, 10).forEach((it) => archipelago.onPeerRemoved(it.id))
+    peerRequests.slice(0, 10).forEach((it) => archipelago.onPeerDisconnected(it.id))
     await archipelago.flush()
 
     expect.strictEqual(archipelago.getIslands().length, 1)

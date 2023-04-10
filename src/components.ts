@@ -11,6 +11,8 @@ import { createTransportRegistryComponent } from './adapters/transport-registry'
 import { createUwsHttpServer } from '@well-known-components/http-server/dist/uws'
 import { createPublisherComponent } from './adapters/publisher'
 import { createPeersRegistry } from './adapters/peers-registry'
+import { getUnderlyingServer } from '@well-known-components/http-server'
+import { TemplatedApp } from 'uWebSockets.js'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -20,6 +22,7 @@ export async function initComponents(): Promise<AppComponents> {
 
   const metrics = await createMetricsComponent(metricDeclarations, { config })
   const server = await createUwsHttpServer<GlobalContext>({ config, logs }, { compression: false })
+  const uws = await getUnderlyingServer<TemplatedApp>(server)
 
   await instrumentHttpServerWithMetrics({ server, metrics, config })
 
@@ -28,7 +31,7 @@ export async function initComponents(): Promise<AppComponents> {
   const nats = await createNatsComponent({ config, logs })
   const transportRegistry = await createTransportRegistryComponent()
   const peersRegistry = await createPeersRegistry()
-  const publisher = await createPublisherComponent({ config, nats })
+  const publisher = await createPublisherComponent({ config, nats, peersRegistry }, uws)
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'goerli'
   const ethereumProvider = new HTTPProvider(

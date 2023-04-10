@@ -2,7 +2,6 @@ import { wsAsAsyncChannel } from '../../src/logic/ws-as-async-channel'
 import { test } from '../components'
 import { createEphemeralIdentity } from '../helpers/identity'
 import { future } from 'fp-future'
-import { normalizeAddress } from '../../src/logic/address'
 import { WebSocket } from 'ws'
 import { URL } from 'url'
 import mitt from 'mitt'
@@ -26,7 +25,6 @@ function expectPacket<T>(packet: ServerPacket, packetType: string): T {
 test('end to end test', ({ components }) => {
   const aliceIdentity = createEphemeralIdentity('alice')
   const bobIdentity = createEphemeralIdentity('bob')
-  const cloheIdentity = createEphemeralIdentity('clohe')
 
   async function createWs(relativeUrl: string): Promise<WebSocket> {
     const protocolHostAndProtocol = `ws://${await components.config.requireString(
@@ -127,7 +125,7 @@ test('end to end test', ({ components }) => {
     ws.close()
   })
 
-  it.only('connects the websocket and authenticates, doing it twice disconnects former connection', async () => {
+  it('connects the websocket and authenticates, doing it twice disconnects former connection', async () => {
     const ws1 = await connectSocket(aliceIdentity)
     const ws2 = await connectSocket(aliceIdentity)
 
@@ -138,7 +136,7 @@ test('end to end test', ({ components }) => {
     expect(ws2.challengeMessage.alreadyConnected).toEqual(true)
 
     const packet = await ws1.channel.yield(100, 'wait for kicked message')
-    expect(packet.message.$case).toEqual('peerKicked')
+    expect(packet.message.$case).toEqual('kicked')
 
     // await for disconnection of ws1
     await ws1DisconnectPromise
@@ -147,200 +145,53 @@ test('end to end test', ({ components }) => {
     ws2.close()
   })
 
-  // it('connects two websockets and share messages', async () => {
-  //   const alice = await connectSocket(aliceIdentity)
-  //   const bob = await connectSocket(bobIdentity)
+  it.only(
+    'two peers should be asigned to the same island and receive the appropiate messages',
+    async () => {
+      const ws1 = await connectSocket(aliceIdentity)
+      const ws2 = await connectSocket(bobIdentity)
 
-  //   // when bob joins the room, the welcome message contains alice's information
-  //   expect(bob.welcome.peerIdentities).toMatchObject({
-  //     [alice.welcome.alias]: normalizeAddress(alice.identity.address)
-  //   })
+      const heartbeat = ClientPacket.encode({
+        message: {
+          $case: 'heartbeat',
+          heartbeat: {
+            position: {
+              x: 0,
+              y: 0,
+              z: 0
+            }
+          }
+        }
+      }).finish()
 
-  //   // when bob connects alice receives peerJoinMessage
-  //   let packet = await alice.channel.yield(1000, 'when bob connects alice receives peerJoinMessage')
-  //   expect(packet.message).toMatchObject({
-  //     $case: 'peerJoinMessage',
-  //     peerJoinMessage: {
-  //       address: normalizeAddress(bob.identity.address),
-  //       alias: bob.welcome.alias
-  //     }
-  //   })
+      await socketSend(ws1, heartbeat)
+      const aliceIslandChanged = await ws1.channel.yield(10000, 'wait for alice change island message')
+      expect(aliceIslandChanged.message.$case).toEqual('islandChanged')
+      if (aliceIslandChanged.message.$case !== 'islandChanged') {
+        return
+      }
 
-  //   {
-  //     // alice sends a message that needs to reach bob
-  //     await socketSend(
-  //       alice,
-  //       craftMessage({
-  //         message: {
-  //           $case: 'peerUpdateMessage',
-  //           peerUpdateMessage: { fromAlias: 0, body: Uint8Array.from([1, 2, 3]), unreliable: false }
-  //         }
-  //       })
-  //     )
-  //     packet = await bob.channel.yield(1000, 'alice awaits message from bob')
-  //     expect(packet.message).toMatchObject({
-  //       $case: 'peerUpdateMessage',
-  //       peerUpdateMessage: {
-  //         fromAlias: alice.welcome.alias,
-  //         body: Uint8Array.from([1, 2, 3]),
-  //         unreliable: false
-  //       }
-  //     })
-  //   }
+      await socketSend(ws2, heartbeat)
+      const bobIslandChanged = await ws2.channel.yield(10000, 'wait for bob change island message')
+      expect(bobIslandChanged.message.$case).toEqual('islandChanged')
+      if (bobIslandChanged.message.$case !== 'islandChanged') {
+        return
+      }
 
-  //   {
-  //     // when a new peer is connected to another room it does not ring any bell on the connected peers
-  //     const clohe = await connectSocket(cloheIdentity)
-  //     clohe.close()
-  //   }
+      expect(aliceIslandChanged.message.islandChanged.islandId).toEqual(bobIslandChanged.message.islandChanged.islandId)
 
-  //   {
-  //     // bob sends a message that needs to reach alice
-  //     await socketSend(
-  //       bob,
-  //       craftMessage({
-  //         message: {
-  //           $case: 'peerUpdateMessage',
-  //           peerUpdateMessage: {
-  //             fromAlias: 0,
-  //             body: Uint8Array.from([3, 2, 3]),
-  //             unreliable: false
-  //           }
-  //         }
-  //       })
-  //     )
-  //     packet = await alice.channel.yield(1000, 'alice awaits message from bob')
-  //     expect(packet.message).toMatchObject({
-  //       $case: 'peerUpdateMessage',
-  //       peerUpdateMessage: {
-  //         fromAlias: bob.welcome.alias,
-  //         body: Uint8Array.from([3, 2, 3]),
-  //         unreliable: false
-  //       }
-  //     })
-  //   }
+      const peerJoin = await ws1.channel.yield(100, 'wait for alice to be notified about bob joining the island')
+      expect(peerJoin.message.$case).toEqual('joinIsland')
 
-  //   {
-  //     // then clohe joins the room and leaves, sends a message and leaves
-  //     const clohe = await connectSocket(cloheIdentity)
+      ws1.close()
 
-  //     {
-  //       // clohe receives welcome with bob and alice
-  //       expect(clohe.welcome.peerIdentities).toMatchObject({
-  //         [alice.welcome.alias]: normalizeAddress(alice.identity.address),
-  //         [bob.welcome.alias]: normalizeAddress(bob.identity.address)
-  //       })
-  //     }
+      const peerLeft = await ws2.channel.yield(10000, 'wait for bob to be notified about alice leaving the island')
+      expect(peerLeft.message.$case).toEqual('leftIsland')
 
-  //     {
-  //       // alice receives peerJoinMessage
-  //       packet = await alice.channel.yield(1000, 'alice receives peerJoinMessage')
-  //       expect(packet.message).toMatchObject({
-  //         $case: 'peerJoinMessage',
-  //         peerJoinMessage: {
-  //           address: normalizeAddress(clohe.identity.address),
-  //           alias: clohe.welcome.alias
-  //         }
-  //       })
-  //     }
-
-  //     {
-  //       // bob receives peerJoinMessage
-  //       packet = await bob.channel.yield(1000, 'bob receives peerJoinMessage')
-  //       expect(packet.message).toMatchObject({
-  //         $case: 'peerJoinMessage',
-  //         peerJoinMessage: {
-  //           address: normalizeAddress(clohe.identity.address),
-  //           alias: clohe.welcomeMessage.alias
-  //         }
-  //       })
-  //     }
-  //     {
-  //       // then send a message
-  //       await socketSend(
-  //         clohe,
-  //         craftMessage({
-  //           message: {
-  //             $case: 'peerUpdateMessage',
-  //             peerUpdateMessage: {
-  //               fromAlias: 0,
-  //               body: Uint8Array.from([6]),
-  //               unreliable: false
-  //             }
-  //           }
-  //         })
-  //       )
-
-  //       {
-  //         // alice receives update
-  //         packet = await alice.channel.yield(1000, 'alice receives update')
-  //         expect(packet.message).toMatchObject({
-  //           $case: 'peerUpdateMessage',
-  //           peerUpdateMessage: {
-  //             fromAlias: clohe.welcomeMessage.alias,
-  //             body: Uint8Array.from([6]),
-  //             unreliable: false
-  //           }
-  //         })
-  //       }
-
-  //       {
-  //         // bob receives update
-  //         packet = await bob.channel.yield(1000, 'bob receives update')
-  //         expect(packet.message).toMatchObject({
-  //           $case: 'peerUpdateMessage',
-  //           peerUpdateMessage: {
-  //             fromAlias: clohe.welcomeMessage.alias,
-  //             body: Uint8Array.from([6]),
-  //             unreliable: false
-  //           }
-  //         })
-  //       }
-  //     }
-  //     {
-  //       // clohe leaves
-  //       clohe.close()
-
-  //       {
-  //         // alice receives leave
-  //         packet = await alice.channel.yield(1000, 'alice receives leave')
-  //         expect(packet.message).toMatchObject({
-  //           $case: 'peerLeaveMessage',
-  //           peerLeaveMessage: {
-  //             alias: clohe.welcomeMessage.alias
-  //           }
-  //         })
-  //       }
-
-  //       {
-  //         // bob receives leave
-  //         packet = await bob.channel.yield(1000, 'bob receives leave')
-  //         expect(packet.message).toMatchObject({
-  //           $case: 'peerLeaveMessage',
-  //           peerLeaveMessage: {
-  //             alias: clohe.welcomeMessage.alias
-  //           }
-  //         })
-  //       }
-  //     }
-  //   }
-
-  //   // and finally alice leaves
-  //   alice.close()
-
-  //   {
-  //     // bob receives leave
-  //     packet = await bob.channel.yield(1000, 'bob receives leave 2')
-  //     expect(packet.message).toMatchObject({
-  //       $case: 'peerLeaveMessage',
-  //       peerLeaveMessage: {
-  //         alias: alice.welcomeMessage.alias
-  //       }
-  //     })
-  //   }
-
-  //   bob.close()
-  // })
+      ws2.close()
+    },
+    60 * 1000
+  )
 })
 
 function socketConnected(socket: WebSocket): Promise<void> {

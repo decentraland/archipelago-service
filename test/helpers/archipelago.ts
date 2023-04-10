@@ -188,11 +188,11 @@ export function configureLibs(closure: BaseClosure) {
   closure.defJsFunction('disconnect', async (ids, arch) => {
     const archipelago = (arch || closure.get('archipelago')) as ArchipelagoController
     if (typeof ids == 'string') {
-      archipelago.onPeerRemoved(ids)
+      archipelago.onPeerDisconnected(ids)
       const updates = await archipelago.flush()
       assert(updates.get(ids).action === 'leave', `Peer ${ids} must be deleted`)
     } else if (Array.isArray(ids)) {
-      ids.forEach((id) => archipelago.onPeerRemoved(id))
+      ids.forEach((id) => archipelago.onPeerDisconnected(id))
       const updates = await archipelago.flush()
       ids.forEach(($: any) => assert(updates.get($).action === 'leave', `Peer ${$} must be deleted`))
     } else {

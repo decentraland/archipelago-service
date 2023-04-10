@@ -28,7 +28,7 @@ export async function websocketHandler(
 
     handleSocketLinearProtocol(context.components, ws)
       .then(() => {
-        peersRegistry.onPeerConnected(ws.address!)
+        peersRegistry.onPeerConnected(ws.address!, ws)
 
         const welcomeMessage = craftMessage({
           message: {
@@ -54,7 +54,6 @@ export async function websocketHandler(
         ws.on('message', (data) => {
           switch (ws.stage) {
             case Stage.HANDSHAKE: {
-              // TODO: is this ok?
               ws.emit('message', Buffer.from(data))
               break
             }
@@ -74,7 +73,6 @@ export async function websocketHandler(
                   }
 
                   peersRegistry.onPeerPositionsUpdate([peerPositionChange])
-
                   break
                 }
               }

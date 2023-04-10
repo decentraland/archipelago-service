@@ -1,5 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { PeerPositionChange } from '../types'
+import { InternalWebSocket, PeerPositionChange } from '../types'
 
 export type PeersAdapter = {
   onPeerDisconnected(id: string): void
@@ -8,18 +8,18 @@ export type PeersAdapter = {
 
 export type IPeersRegistryComponent = IBaseComponent &
   PeersAdapter & {
-    onPeerConnected(id: string): void
+    onPeerConnected(id: string, ws: InternalWebSocket): void
     setAdapter(l: PeersAdapter): void
-    isPeerConnected(id: string): boolean
+    getPeerWs(id: string): InternalWebSocket | undefined
   }
 
 export async function createPeersRegistry(): Promise<IPeersRegistryComponent> {
   let adapter: PeersAdapter | undefined = undefined
 
-  const connectedPeers = new Set<string>()
+  const connectedPeers = new Map<string, InternalWebSocket>()
 
-  function onPeerConnected(id: string): void {
-    connectedPeers.add(id)
+  function onPeerConnected(id: string, ws: InternalWebSocket): void {
+    connectedPeers.set(id, ws)
   }
 
   function onPeerDisconnected(id: string): void {
@@ -38,8 +38,8 @@ export async function createPeersRegistry(): Promise<IPeersRegistryComponent> {
     adapter.onPeerPositionsUpdate(changes)
   }
 
-  function isPeerConnected(id: string): boolean {
-    return connectedPeers.has(id)
+  function getPeerWs(id: string): InternalWebSocket | undefined {
+    return connectedPeers.get(id)
   }
 
   function setAdapter(l: PeersAdapter) {
@@ -50,7 +50,7 @@ export async function createPeersRegistry(): Promise<IPeersRegistryComponent> {
     onPeerConnected,
     onPeerDisconnected,
     onPeerPositionsUpdate,
-    isPeerConnected,
+    getPeerWs,
     setAdapter
   }
 }
