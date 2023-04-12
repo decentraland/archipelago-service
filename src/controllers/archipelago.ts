@@ -312,7 +312,7 @@ export class ArchipelagoController {
         const island = this.islands.get(update.islandId)!
         this.logger.debug(`Publishing island change for ${peerId}`)
         this.peersRegistry.onChangeToIsland(peerId, island, update)
-        this.publisher
+        this.publisher.onChangeToIsland(peerId, island, update)
       } else if (update.action === 'leave') {
         this.peersRegistry.onPeerLeft(peerId, update.islandId)
       }
