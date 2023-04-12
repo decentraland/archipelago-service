@@ -2,6 +2,7 @@ import { Lifecycle } from '@well-known-components/interfaces'
 import { setupRouter } from './controllers/routes'
 import { ArchipelagoController, Options } from './controllers/archipelago'
 import { AppComponents, GlobalContext, TestComponents } from './types'
+import { setupListener } from './controllers/listener'
 
 const DEFAULT_ARCHIPELAGO_ISLANDS_STATUS_UPDATE_INTERVAL = 1000 * 60 * 2 // 2 min
 const DEFAULT_ARCHIPELAGO_STATUS_UPDATE_INTERVAL = 10000
@@ -25,7 +26,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  const { metrics, config, logs, peersRegistry, publisher } = components
+  const { nats, metrics, config, logs, peersRegistry, publisher } = components
 
   const archipelagoConfig: Options = {
     components: { logs, peersRegistry, metrics },
@@ -68,4 +69,6 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
       logger.error(err)
     }
   }, serviceDiscoveryUpdateFreq)
+
+  await setupListener(archipelago, { nats, config, logs })
 }
