@@ -22,8 +22,12 @@ describe('archipelago', () => {
     const peersRegistry = await createPeersRegistry({
       publish: (_topic: string, _payload: Uint8Array, _binary: boolean) => {}
     })
+
+    const publisher = {
+      onChangeToIsland: (_peerId: string, _island: Island, _change: ChangeToIslandUpdate) => {}
+    }
     archipelago = new ArchipelagoController({
-      components: { logs, peersRegistry, metrics },
+      components: { logs, peersRegistry, metrics, publisher },
       joinDistance: 64,
       leaveDistance: 80
     })

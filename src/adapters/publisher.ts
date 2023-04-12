@@ -1,6 +1,12 @@
 import { encodeJson } from '@well-known-components/nats-component'
-import { BaseComponents, Island } from '../types'
-import { IslandStatusMessage, IslandData } from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
+import { BaseComponents, ChangeToIslandUpdate, Island, PeerData } from '../types'
+import {
+  IslandStatusMessage,
+  IslandData,
+  IslandChangedMessage,
+  JoinIslandMessage,
+  LeftIslandMessage
+} from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
 
 import { IBaseComponent } from '@well-known-components/interfaces'
 
@@ -10,6 +16,7 @@ export type ServiceDiscoveryMessage = {
 }
 
 export type IPublisherComponent = IBaseComponent & {
+  onChangeToIsland(peerId: string, island: Island, change: ChangeToIslandUpdate): void
   publishServiceDiscoveryMessage(): void
   publishIslandsReport(islands: Island[]): void
 }
@@ -20,6 +27,34 @@ export async function createPublisherComponent({
   peersRegistry
 }: Pick<BaseComponents, 'config' | 'nats' | 'peersRegistry'>): Promise<IPublisherComponent> {
   const commitHash = await config.getString('COMMIT_HASH')
+
+  function onChangeToIsland(peerId: string, toIsland: Island, update: ChangeToIslandUpdate) {
+    const islandChangedMessage: IslandChangedMessage = {
+      islandId: update.islandId,
+      connStr: update.connStr,
+      peers: {}
+    }
+
+    toIsland.peers.forEach((peerData: PeerData) => {
+      islandChangedMessage.peers[peerData.id] = {
+        x: peerData.position[0],
+        y: peerData.position[1],
+        z: peerData.position[2]
+      }
+    })
+    if (update.fromIslandId) {
+      islandChangedMessage.fromIslandId = update.fromIslandId
+    }
+    nats.publish(`client-proto.${peerId}.island_changed`, IslandChangedMessage.encode(islandChangedMessage).finish())
+
+    nats.publish(
+      `client-proto.island.${update.islandId}.peer_join`,
+      JoinIslandMessage.encode({
+        islandId: update.islandId,
+        peerId
+      }).finish()
+    )
+  }
 
   function publishServiceDiscoveryMessage() {
     const status = {
@@ -54,6 +89,7 @@ export async function createPublisherComponent({
   }
 
   return {
+    onChangeToIsland,
     publishServiceDiscoveryMessage,
     publishIslandsReport
   }

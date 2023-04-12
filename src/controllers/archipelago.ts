@@ -17,6 +17,9 @@ import { IdGenerator, sequentialIdGenerator } from '../misc/idGenerator'
 import { ILoggerComponent, IMetricsComponent } from '@well-known-components/interfaces'
 import { AccessToken } from 'livekit-server-sdk'
 import { IPeersRegistryComponent } from '../adapters/peers-registry'
+import { IPublisherComponent } from '../adapters/publisher'
+
+type Publisher = Pick<IPublisherComponent, 'onChangeToIsland'>
 
 type Metrics = {
   peersCount: 0
@@ -24,7 +27,7 @@ type Metrics = {
 }
 
 export type Options = {
-  components: Pick<BaseComponents, 'logs' | 'metrics' | 'peersRegistry'>
+  components: Pick<BaseComponents, 'logs' | 'metrics' | 'peersRegistry'> & { publisher: Publisher }
   flushFrequency?: number
   roomPrefix?: string
   joinDistance: number
@@ -77,8 +80,10 @@ function squared(n: number) {
 }
 
 export class ArchipelagoController {
-  private transports = new Map<number, Transport>()
+  private publisher: Publisher
   private peersRegistry: IPeersRegistryComponent
+
+  private transports = new Map<number, Transport>()
   private peers: Map<string, PeerData> = new Map()
   private islands: Map<string, Island> = new Map()
   private currentSequence: number = 0
@@ -96,7 +101,7 @@ export class ArchipelagoController {
   disposed: boolean = false
 
   constructor({
-    components: { logs, peersRegistry, metrics },
+    components: { logs, peersRegistry, metrics, publisher },
     flushFrequency,
     joinDistance,
     leaveDistance,
@@ -106,6 +111,7 @@ export class ArchipelagoController {
     this.logger = logs.getLogger('Archipelago')
     this.metrics = metrics
     this.peersRegistry = peersRegistry
+    this.publisher = publisher
 
     this.flushFrequency = flushFrequency ?? 2
     this.joinDistance = joinDistance
@@ -306,6 +312,7 @@ export class ArchipelagoController {
         const island = this.islands.get(update.islandId)!
         this.logger.debug(`Publishing island change for ${peerId}`)
         this.peersRegistry.onChangeToIsland(peerId, island, update)
+        this.publisher
       } else if (update.action === 'leave') {
         this.peersRegistry.onPeerLeft(peerId, update.islandId)
       }

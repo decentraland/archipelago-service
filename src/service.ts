@@ -29,7 +29,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   const { nats, metrics, config, logs, peersRegistry, publisher } = components
 
   const archipelagoConfig: Options = {
-    components: { logs, peersRegistry, metrics },
+    components: { logs, peersRegistry, metrics, publisher },
     flushFrequency: await config.requireNumber('ARCHIPELAGO_FLUSH_FREQUENCY'),
     joinDistance: await config.requireNumber('ARCHIPELAGO_JOIN_DISTANCE'),
     leaveDistance: await config.requireNumber('ARCHIPELAGO_LEAVE_DISTANCE'),
