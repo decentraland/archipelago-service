@@ -29,7 +29,7 @@ export async function initComponents(): Promise<AppComponents> {
   const fetch = await createFetchComponent()
   const nats = await createNatsComponent({ config, logs })
   const peersRegistry = await createPeersRegistry(uws)
-  const publisher = await createPublisherComponent({ config, nats })
+  const publisher = await createPublisherComponent({ config, nats, peersRegistry })
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? 'goerli'
   const ethereumProvider = new HTTPProvider(

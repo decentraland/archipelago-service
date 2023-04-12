@@ -16,14 +16,16 @@ export type IPublisherComponent = IBaseComponent & {
 
 export async function createPublisherComponent({
   nats,
-  config
-}: Pick<BaseComponents, 'config' | 'nats'>): Promise<IPublisherComponent> {
+  config,
+  peersRegistry
+}: Pick<BaseComponents, 'config' | 'nats' | 'peersRegistry'>): Promise<IPublisherComponent> {
   const commitHash = await config.getString('COMMIT_HASH')
 
   function publishServiceDiscoveryMessage() {
     const status = {
       currentTime: Date.now(),
-      commitHash
+      commitHash,
+      userCount: peersRegistry.getPeerCount()
     }
     const serviceDiscoveryMessage: ServiceDiscoveryMessage = {
       serverName: 'archipelago',

@@ -5,6 +5,7 @@ import { IslandStatusMessage } from '@dcl/protocol/out-js/decentraland/kernel/co
 import { createPublisherComponent, ServiceDiscoveryMessage } from '../../src/adapters/publisher'
 import { Island } from '../../src/types'
 import { INatsComponent, NatsMsg } from '@well-known-components/nats-component/dist/types'
+import { createPeersRegistry } from '../../src/adapters/peers-registry'
 
 function takeOneSubscription(nats: INatsComponent, topic: string) {
   return new Promise<NatsMsg>((resolve, reject) => {
@@ -29,7 +30,10 @@ describe('publishing', () => {
     Date.now = jest.fn(() => now)
     const nats = await createLocalNatsComponent()
     const s = takeOneSubscription(nats, 'service.discovery')
-    const { publishServiceDiscoveryMessage } = await createPublisherComponent({ nats, config })
+    const peersRegistry = await createPeersRegistry({
+      publish: (_topic: string, _payload: Uint8Array, _binary: boolean) => {}
+    })
+    const { publishServiceDiscoveryMessage } = await createPublisherComponent({ nats, config, peersRegistry })
     publishServiceDiscoveryMessage()
     const message = await s
     const data: ServiceDiscoveryMessage = decodeJson(message.data) as any
@@ -38,7 +42,8 @@ describe('publishing', () => {
         serverName: 'archipelago',
         status: {
           currentTime: now,
-          commitHash
+          commitHash,
+          userCount: 0
         }
       })
     )
@@ -58,7 +63,10 @@ describe('publishing', () => {
       }
     ]
     const s = takeOneSubscription(nats, 'archipelago.islands')
-    const { publishIslandsReport } = await createPublisherComponent({ nats, config })
+    const peersRegistry = await createPeersRegistry({
+      publish: (_topic: string, _payload: Uint8Array, _binary: boolean) => {}
+    })
+    const { publishIslandsReport } = await createPublisherComponent({ nats, config, peersRegistry })
     publishIslandsReport(islands)
     const message = await s
     const { data } = IslandStatusMessage.decode(Reader.create(message.data))

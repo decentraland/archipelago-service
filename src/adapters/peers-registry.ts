@@ -17,6 +17,7 @@ export type IPeersRegistryComponent = IBaseComponent &
     onPeerConnected(id: string, ws: InternalWebSocket): void
     setAdapter(l: PeersAdapter): void
     getPeerWs(id: string): InternalWebSocket | undefined
+    getPeerCount(): number
     onChangeToIsland(peerId: string, island: Island, change: ChangeToIslandUpdate): void
     onPeerLeft(peerId: string, islandId: string): void
   }
@@ -48,6 +49,10 @@ export async function createPeersRegistry(uws: WsApp): Promise<IPeersRegistryCom
 
   function getPeerWs(id: string): InternalWebSocket | undefined {
     return connectedPeers.get(id)
+  }
+
+  function getPeerCount(): number {
+    return connectedPeers.size
   }
 
   function setAdapter(l: PeersAdapter) {
@@ -129,6 +134,7 @@ export async function createPeersRegistry(uws: WsApp): Promise<IPeersRegistryCom
     onPeerDisconnected,
     onPeerPositionsUpdate,
     getPeerWs,
+    getPeerCount,
     setAdapter
   }
 }
