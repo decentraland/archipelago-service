@@ -1,4 +1,4 @@
-import { ClientPacket } from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
+import { ClientPacket, Heartbeat } from '@dcl/protocol/out-js/decentraland/kernel/comms/v3/archipelago.gen'
 import { upgradeWebSocketResponse } from '@well-known-components/http-server/dist/ws'
 import { craftMessage } from '../../logic/craft-message'
 import { handleSocketLinearProtocol } from '../../logic/handle-linear-protocol'
@@ -73,7 +73,12 @@ export async function websocketHandler(
                     preferedIslandId: desiredRoom
                   }
 
-                  nats.publish(`archipelago.peer.${ws.address!}.heartbeat`, new Uint8Array(data))
+                  nats.publish(
+                    `archipelago.peer.${ws.address!}.heartbeat`,
+                    Heartbeat.encode({
+                      position
+                    }).finish()
+                  )
                   peersRegistry.onPeerPositionsUpdate([peerPositionChange])
                   break
                 }
