@@ -1670,10 +1670,10 @@
   dependencies:
     dotenv "^16.0.1"
 
-"@well-known-components/http-server@^2.0.0-20230216161243.commit-bfe3f0a":
-  version "2.0.0-20230216161243.commit-bfe3f0a"
-  resolved "https://registry.yarnpkg.com/@well-known-components/http-server/-/http-server-2.0.0-20230216161243.commit-bfe3f0a.tgz#d32b3f201d2f0399e83df8399d06f93c50f6f6be"
-  integrity sha512-u4HAT+f/z6GKGQWFAaXojSjyzubSc7GXbYJP83gDLP40/ioQfima9vC9BVzZhYYEFwJWq4YZ2CyMmDbngY1zAQ==
+"@well-known-components/http-server@^2.0.0-20230501134558.commit-be9a25d":
+  version "2.0.0-20230501134558.commit-be9a25d"
+  resolved "https://registry.yarnpkg.com/@well-known-components/http-server/-/http-server-2.0.0-20230501134558.commit-be9a25d.tgz#3097c4009796737fd4d0d2e4cfc59c5f94d81287"
+  integrity sha512-EHnkQQNTBmyrc5TixTUpJfmhIKHanr6sYIwUgpdp2NV3XhQRQSCPHaiMKnZgE0pQMvKD8k6LnDyGjqsIm5jH8w==
   dependencies:
     "@types/http-errors" "^1.8.1"
     destroy "^1.2.0"
@@ -1683,8 +1683,6 @@
     node-fetch "^2.6.9"
     on-finished "^2.4.1"
     path-to-regexp "^6.2.1"
-  optionalDependencies:
-    uWebSockets.js "github:uNetworking/uWebSockets.js#v20.10.0"
 
 "@well-known-components/interfaces@^1.1.1", "@well-known-components/interfaces@^1.3.0":
   version "1.3.0"
