@@ -12,13 +12,11 @@ export const metricDeclarations = {
   },
   dcl_archipelago_peers_count: {
     help: 'Number of peers in islands',
-    type: IMetricsComponent.GaugeType,
-    labelNames: ['transport'] // transport=(livekit|ws|p2p)
+    type: IMetricsComponent.GaugeType
   },
   dcl_archipelago_islands_count: {
     help: 'Number of live islands',
-    type: IMetricsComponent.GaugeType,
-    labelNames: ['transport'] // transport=(livekit|ws|p2p)
+    type: IMetricsComponent.GaugeType
   },
   dcl_archipelago_change_island_count: {
     help: 'Count change island messages',
