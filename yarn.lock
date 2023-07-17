@@ -311,12 +311,12 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@dcl/crypto@^3.4.2":
-  version "3.4.2"
-  resolved "https://registry.yarnpkg.com/@dcl/crypto/-/crypto-3.4.2.tgz#025d0bd2a996fba6cbae80025544a8d04c50efc4"
-  integrity sha512-yUZeWrOVZNnPBiYhDd3M6z/QJWKEHvAFPaFhGmq2vtzJ3myIzH3dpGdJ4YKpkyhBddOaHhwfa9MUIv+30ve+Ew==
+"@dcl/crypto@^3.4.3":
+  version "3.4.3"
+  resolved "https://registry.yarnpkg.com/@dcl/crypto/-/crypto-3.4.3.tgz#74f55aed699949bc2566a7b0d6a23de499019afe"
+  integrity sha512-biG8PqImY3jtVM5bPizgAD0P6X9/7VMxKuD2hxiEEeZClfB1Zi76Qk8pHaLpJ5pU3B+NogwZ8xoREhq0Po+gXQ==
   dependencies:
-    "@dcl/schemas" "^7.3.4"
+    "@dcl/schemas" "^8.2.0"
     eth-connect "^6.0.3"
     ethereum-cryptography "^1.0.3"
 
@@ -344,16 +344,7 @@
   dependencies:
     "@dcl/ts-proto" "1.153.0"
 
-"@dcl/schemas@^7.3.4":
-  version "7.5.0"
-  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-7.5.0.tgz#7d8dba43ff3148f305f31f0b919b0ab195966522"
-  integrity sha512-C2ptSYHRW55l4qQ45YgbBN9d9yDsqpjLfHKWQXFWcknchskxqryB5bd7JLMfPk081QJafDXh/BReTNhMvi/vKw==
-  dependencies:
-    ajv "^8.11.0"
-    ajv-errors "^3.0.0"
-    ajv-keywords "^5.1.0"
-
-"@dcl/schemas@^8.2.2":
+"@dcl/schemas@^8.2.0", "@dcl/schemas@^8.2.2":
   version "8.2.2"
   resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-8.2.2.tgz#31b3697ec517d4a5a6958bddf046441a969b8056"
   integrity sha512-IZqcT1YOKxw5XWs6LW6Uw+7Ue5vHCVERPMwefAdt26jW1OTH818od0rBc1tQzzfBTwsrAvbgFJvpbZedieu00g==
