@@ -7,8 +7,7 @@ import {
   BaseComponents,
   ChangeToIslandUpdate,
   LeaveIslandUpdate,
-  IslandUpdates,
-  TransportType
+  IslandUpdates
 } from '../types'
 
 import { metricDeclarations } from '../metrics'
@@ -20,11 +19,6 @@ import { IPeersRegistryComponent } from '../adapters/peers-registry'
 import { IPublisherComponent } from '../adapters/publisher'
 
 type Publisher = Pick<IPublisherComponent, 'onChangeToIsland'>
-
-type Metrics = {
-  peersCount: 0
-  islandsCount: 0
-}
 
 export type Options = {
   components: Pick<BaseComponents, 'logs' | 'metrics' | 'peersRegistry'> & { publisher: Publisher }
@@ -278,26 +272,8 @@ export class ArchipelagoController {
       }
     }
 
-    const metricsByTransporType = new Map<TransportType, Metrics>()
-    for (const island of this.islands.values()) {
-      const transport = this.transports.get(island.transportId)
-      if (!transport) {
-        continue
-      }
-
-      const metrics = metricsByTransporType.get(transport.type) || {
-        peersCount: 0,
-        islandsCount: 0
-      }
-      metrics.peersCount += island.peers.length
-      metrics.islandsCount += 1
-      metricsByTransporType.set(transport.type, metrics)
-    }
-
-    for (const [transport, metrics] of metricsByTransporType) {
-      this.metrics.observe('dcl_archipelago_islands_count', { transport }, metrics.islandsCount)
-      this.metrics.observe('dcl_archipelago_peers_count', { transport }, metrics.peersCount)
-    }
+    this.metrics.observe('dcl_archipelago_islands_count', {}, this.islands.size)
+    this.metrics.observe('dcl_archipelago_peers_count', {}, this.peers.size)
 
     const updates = new Map(this.pendingUpdates)
     this.pendingUpdates.clear()
