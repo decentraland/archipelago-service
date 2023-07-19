@@ -212,6 +212,7 @@ export class ArchipelagoController {
 
     if (peer) {
       this.peers.delete(id)
+      this.pendingNewPeers.delete(id)
       if (peer.islandId) {
         const island = this.islands.get(peer.islandId)!
 
