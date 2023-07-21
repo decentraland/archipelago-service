@@ -209,10 +209,10 @@ export class ArchipelagoController {
 
   onPeerDisconnected(id: string): void {
     const peer = this.peers.get(id)
+    this.pendingNewPeers.delete(id)
 
     if (peer) {
       this.peers.delete(id)
-      this.pendingNewPeers.delete(id)
       if (peer.islandId) {
         const island = this.islands.get(peer.islandId)!
 
