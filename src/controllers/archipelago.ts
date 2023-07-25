@@ -17,6 +17,7 @@ import { ILoggerComponent, IMetricsComponent } from '@well-known-components/inte
 import { AccessToken } from 'livekit-server-sdk'
 import { IPeersRegistryComponent } from '../adapters/peers-registry'
 import { IPublisherComponent } from '../adapters/publisher'
+import { TrackSource } from 'livekit-server-sdk/dist/grants'
 
 type Publisher = Pick<IPublisherComponent, 'onChangeToIsland'>
 
@@ -126,7 +127,15 @@ export class ArchipelagoController {
               identity: userId,
               ttl: 5 * 60 // 5 minutes
             })
-            token.addGrant({ roomJoin: true, room: roomId, canPublish: true, canSubscribe: true })
+            token.addGrant({
+              roomJoin: true,
+              room: roomId,
+              roomList: false,
+              canPublish: true,
+              canSubscribe: true,
+              canPublishData: true,
+              canPublishSources: [TrackSource.MICROPHONE]
+            })
             connStrs[userId] = `livekit:${livekit.host}?access_token=${token.toJwt()}`
           }
           return connStrs
