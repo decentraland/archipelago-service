@@ -292,7 +292,6 @@ export class ArchipelagoController {
       if (update.action === 'changeTo') {
         const island = this.islands.get(update.islandId)!
         this.logger.debug(`Publishing island change for ${peerId}`)
-        this.metrics.increment('dcl_archipelago_change_island_count', {})
         this.peersRegistry.onChangeToIsland(peerId, island, update)
         this.publisher.onChangeToIsland(peerId, island, update)
       } else if (update.action === 'leave') {
