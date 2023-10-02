@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@dcl/crypto": "^3.4.5",
-    "@dcl/protocol": "^1.0.0-6200210039.commit-75f18e8",
+    "@dcl/protocol": "^1.0.0-6314457636.commit-a9a962a",
     "@dcl/schemas": "^9.7.0",
     "@well-known-components/env-config-provider": "^1.2.0",
     "@well-known-components/http-server": "^2.0.0",
